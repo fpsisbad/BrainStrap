@@ -14,6 +14,10 @@ on:
         description: "Release version (e.g. 2.0.0)"
         required: true
         default: "2.0.0"
+      release:
+        description: "Publish a Release with the exe"
+        type: boolean
+        default: true
   push:
     tags: ["v*"]
   pull_request:
@@ -54,6 +58,23 @@ jobs:
           "SHA-256: $h" >> $env:GITHUB_STEP_SUMMARY
           "Size: {0:N1} MB" -f ((Get-Item out/BrainStrap.exe).Length / 1MB) >> $env:GITHUB_STEP_SUMMARY
 
+      # Real pictures of the real app, pushed to the ci-shots branch so the interface can be reviewed after every build.
+      - name: Screenshots of every page
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $p = Start-Process "$PWD\out\BrainStrap.exe" -ArgumentList '--shots', "$PWD\shots" -PassThru
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); "timed out" | Out-File shots\log.txt -Append }
+          Get-ChildItem shots | Select-Object Name, Length
+          if (Test-Path shots\log.txt) { Get-Content shots\log.txt }
+          cd shots
+          git init -q
+          git checkout -q -b ci-shots
+          git add -A
+          git -c user.name="brainstrap-ci" -c user.email="ci@users.noreply.github.com" commit -q -m "screenshots of ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-shots
+
       - uses: actions/upload-artifact@v4
         with:
           name: BrainStrap
@@ -62,7 +83,7 @@ jobs:
             out/BrainStrap.exe.sha256
 
       - name: Release
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && (github.event_name == 'push' || inputs.release)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.v.outputs.version }}

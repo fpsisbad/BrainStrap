@@ -61,6 +61,9 @@ public partial class MainWindow : Window
         };
     }
 
+    /// <summary>Every page in sidebar order (used by the screenshot mode).</summary>
+    public IEnumerable<string> PageKeys => ((Panel)NavHome.Parent).Children.OfType<RadioButton>().Select(r => (string)r.Tag);
+
     /// <summary>Opens a page by key and ticks its sidebar entry.</summary>
     public void Go(string key)
     {

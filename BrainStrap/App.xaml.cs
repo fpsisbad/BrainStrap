@@ -30,6 +30,14 @@ public partial class App : Application
             var s = AppState.S;
             Themes.Apply(s);
 
+            // 0) build tool: save a picture of every page, then quit
+            if (Arg("--shots") is { } shotDir)
+            {
+                await UI.Shots.RunAsync(shotDir);
+                Shutdown(0);
+                return;
+            }
+
             // 1) the Play button on roblox.com: a roblox-player: link -> launch screen, then Roblox
             var link = args.FirstOrDefault(a => a.StartsWith("roblox-player:", StringComparison.OrdinalIgnoreCase));
             if (link != null)

@@ -26,6 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- WPF projects leave these two out of the implicit usings -->
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- the flag catalog is read at runtime from inside the exe -->
     <EmbeddedResource Include="catalog.json" LogicalName="catalog.json" />
     <EmbeddedResource Include="brainai.json" LogicalName="brainai.json" />

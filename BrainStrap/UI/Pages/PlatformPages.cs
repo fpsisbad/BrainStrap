@@ -68,9 +68,7 @@ internal static class ModsPage
                     Done("preview");
                 }),
                 Ui.Ghost(inSel ? "In collection" : "Add", () => { if (!inSel) { s.Platform.ActivePacks.Add(pack.Id); AppState.Save(); host.Refresh(); } })));
-            var frame = new Border { Child = card, Padding = new Thickness(16), CornerRadius = new CornerRadius(16), Margin = new Thickness(0, 0, 12, 12), BorderThickness = new Thickness(1) };
-            frame.SetResourceReference(Border.BackgroundProperty, "Panel2");
-            frame.SetResourceReference(Border.BorderBrushProperty, "Line");
+            var frame = new Border { Child = card, Style = (Style)Application.Current.FindResource("Tile"), Margin = new Thickness(0, 0, 12, 12) };
             grid.Children.Add(frame);
         }
         body.Children.Add(Ui.Card(Ui.Lbl("Mod Marketplace · Live Preview · Mod Sandbox"), Ui.Desc("Packs are data only: previewing one never runs any code. More packs arrive through the BrainStore.", 0), new Border { Height = 10 }, grid,
@@ -342,13 +340,9 @@ internal static class StorePage
         sp.Children.Add(Ui.Text((pub?.Name ?? it.Publisher) + (Store.Verified(idx, it) ? "  ✓ verified" : ""), 11.5, Store.Verified(idx, it) ? "Ok" : "Dim"));
         sp.Children.Add(Ui.Small(it.Summary, 6));
         if (it.Rating > 0) sp.Children.Add(Ui.Text($"{new string('★', (int)Math.Round(it.Rating))} {it.Rating:0.0} · {it.Reviews.Count} reviews", 12, "Muted"));
-        var b = new Button { Content = sp, Padding = new Thickness(16), Cursor = Ui.Hand, Background = Brushes.Transparent, BorderThickness = new Thickness(0) };
-        b.Template = new ControlTemplate(typeof(Button)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) };
-        var frame = new Border { Child = b, CornerRadius = new CornerRadius(16), BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 12, 12) };
-        frame.SetResourceReference(Border.BackgroundProperty, "Panel2");
-        frame.SetResourceReference(Border.BorderBrushProperty, "Line");
+        var b = new Button { Content = sp, Style = (Style)Application.Current.FindResource("TileButton"), Margin = new Thickness(0, 0, 12, 12), VerticalAlignment = VerticalAlignment.Stretch };
         b.Click += (_, _) => { open = it; host.Refresh(); };
-        return frame;
+        return b;
     }
 
     /// <summary>The item page: screenshots, reviews, version history, permissions and verified status.</summary>

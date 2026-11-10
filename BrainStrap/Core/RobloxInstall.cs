@@ -8,7 +8,7 @@ internal sealed record InstalledVersion(string Folder, string Name, DateTime Sta
     public string PlayerExe => Path.Combine(Folder, "RobloxPlayerBeta.exe");
 }
 
-/// <summary>Finds the installed Roblox player and asks Roblox which version is current. BrainStrap never downloads Roblox itself.</summary>
+/// <summary>Finds installed Roblox players (BrainStrap's own installs first, then any Roblox put there by Roblox's launcher) and asks Roblox which version is current.</summary>
 internal static class RobloxInstall
 {
     static readonly HttpClient Http = new(new HttpClientHandler { UseCookies = false, UseProxy = true })
@@ -21,11 +21,12 @@ internal static class RobloxInstall
     public static List<InstalledVersion> List()
     {
         var list = new List<InstalledVersion>();
-        foreach (var root in new[] { Paths.RobloxVersions, Paths.RobloxVersionsMachine })
+        foreach (var root in new[] { RobloxDeploy.Root, Paths.RobloxVersions, Paths.RobloxVersionsMachine })
         {
             if (!Directory.Exists(root)) continue;
             foreach (var dir in Directory.EnumerateDirectories(root, "version-*"))
             {
+                if (dir.EndsWith(".partial", StringComparison.OrdinalIgnoreCase)) continue;
                 var exe = Path.Combine(dir, "RobloxPlayerBeta.exe");
                 if (File.Exists(exe)) list.Add(new InstalledVersion(dir, Path.GetFileName(dir), File.GetLastWriteTimeUtc(exe)));
             }
@@ -34,6 +35,12 @@ internal static class RobloxInstall
     }
 
     public static InstalledVersion? Newest() => List().FirstOrDefault();
+
+    /// <summary>An installed copy of exactly this version, if there is one.</summary>
+    public static InstalledVersion? Find(string version) => List().FirstOrDefault(v => v.Name.Equals(version, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>True when this copy lives in BrainStrap's own folder.</summary>
+    public static bool IsOwn(InstalledVersion v) => v.Folder.StartsWith(RobloxDeploy.Root, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The current Windows player version folder name (like "version-0123abcd...") from Roblox's public settings service, or null if offline.</summary>
     public static async Task<string?> LatestVersionAsync()
@@ -84,7 +91,7 @@ internal static class RobloxInstall
         {
             // only ever delete a plain "version-*" folder directly inside a Roblox Versions folder
             var parent = Path.GetDirectoryName(v.Folder);
-            var ok = parent != null && (parent.Equals(Paths.RobloxVersions, StringComparison.OrdinalIgnoreCase) ||
+            var ok = parent != null && (parent.Equals(Paths.RobloxVersions, StringComparison.OrdinalIgnoreCase) || parent.Equals(RobloxDeploy.Root.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase) ||
                                         parent.Equals(Paths.RobloxVersionsMachine, StringComparison.OrdinalIgnoreCase));
             if (!ok || !v.Name.StartsWith("version-", StringComparison.Ordinal)) continue;
             try { Directory.Delete(v.Folder, true); removed++; }

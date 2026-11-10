@@ -64,35 +64,60 @@ internal static class Themes
 
     public static bool IsHex(string? h) => h != null && Regex.IsMatch(h, "^#[0-9A-Fa-f]{6}$");
 
+    static Color A(Color c, double alpha) => Color.FromArgb((byte)Math.Round(255 * Math.Clamp(alpha, 0, 1)), c.R, c.G, c.B);
+    static Color Mix(Color a, Color b, double t) => Color.FromRgb((byte)(a.R + (b.R - a.R) * t), (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));
+    static Brush Grad(Point from, Point to, params (Color c, double at)[] stops)
+    {
+        var g = new LinearGradientBrush { StartPoint = from, EndPoint = to };
+        foreach (var (c, at) in stops) g.GradientStops.Add(new GradientStop(c, at));
+        g.Freeze();
+        return g;
+    }
+
+    /// <summary>The bundled Manrope, then Windows' own font if a glyph is missing.</summary>
+    public static FontFamily DefaultFont => new(new Uri("pack://application:,,,/"), "./Assets/Fonts/#Manrope, Segoe UI Variable Display, Segoe UI");
+
     public static void Apply(Settings s)
     {
         var t = Effective(s);
         var r = Application.Current.Resources;
-        var ink = C(t.Ink);
-        var glass = s.Studio.Background != "none" && !s.Studio.Minimal;   // see-through cards over a background
+        Color bg = C(t.Bg), panel = C(t.Panel), ink = C(t.Ink);
+        var glass = s.Studio.Background != "none" && !s.Studio.Minimal;   // see-through surfaces over the live backdrop
+        var accent = C(!s.Studio.Minimal && IsHex(s.Accent) ? s.Accent! : t.Accent);
+        var lum = (0.299 * accent.R + 0.587 * accent.G + 0.114 * accent.B) / 255.0;
 
-        Put(r, "Bg", C(t.Bg));
-        var panel = C(t.Panel);
-        Put(r, "Panel", glass ? Color.FromArgb(0xE0, panel.R, panel.G, panel.B) : panel);
+        Put(r, "Bg", glass && t.Dark ? Mix(bg, Colors.Black, 0.25) : bg);
+        Put(r, "Panel", glass ? A(panel, 0.72) : panel);
         Put(r, "Panel2", C(t.Panel2));
         Put(r, "Ink", ink);
         Put(r, "Muted", C(t.Muted));
         Put(r, "Dim", C(t.Dim));
-        Put(r, "Pill", C(t.Pill));
-        Put(r, "PillHover", C(t.PillHover));
-        Put(r, "Line", Color.FromArgb(t.Dark ? (byte)0x14 : (byte)0x1A, ink.R, ink.G, ink.B));
-        Put(r, "Line2", Color.FromArgb(t.Dark ? (byte)0x26 : (byte)0x2E, ink.R, ink.G, ink.B));
-
-        var accent = C(!s.Studio.Minimal && IsHex(s.Accent) ? s.Accent! : t.Accent);
+        Put(r, "Line", A(ink, t.Dark ? 0.08 : 0.10));
+        Put(r, "Line2", A(ink, t.Dark ? 0.15 : 0.18));
+        // controls are frosted (a veil of the text colour) so the backdrop shows through them
+        Put(r, "Pill", glass ? A(ink, t.Dark ? 0.09 : 0.07) : C(t.Pill));
+        Put(r, "PillHover", glass ? A(ink, t.Dark ? 0.16 : 0.12) : C(t.PillHover));
+        Put(r, "NavHover", A(ink, 0.06));
+        Put(r, "NavActive", A(ink, t.Dark ? 0.11 : 0.09));
+        Put(r, "FieldBrush", glass ? (t.Dark ? A(Colors.Black, 0.34) : A(Colors.White, 0.72)) : C(t.Panel2));
+        Put(r, "SidebarBrush", glass ? A(Mix(bg, panel, 0.5), t.Dark ? 0.62 : 0.80) : panel);
         Put(r, "Accent", accent);
-        var lum = (0.299 * accent.R + 0.587 * accent.G + 0.114 * accent.B) / 255.0;
         Put(r, "AccentInk", lum > 0.6 ? C("#111111") : C("#FFFFFF"));
+        Put(r, "AccentSoft", A(accent, 0.13));
+        Put(r, "AccentLine", A(accent, 0.45));
+        r["GlowColor"] = accent;
 
-        // Custom Fonts: any font installed on this PC
+        var top = Mix(panel, ink, 0.04);
+        r["CardBrush"] = glass
+            ? Grad(new Point(0, 0), new Point(0, 1), (A(top, t.Dark ? 0.80 : 0.86), 0), (A(panel, t.Dark ? 0.66 : 0.78), 1))
+            : Grad(new Point(0, 0), new Point(0, 1), (top, 0), (panel, 1));
+        r["CardLine"] = Grad(new Point(0, 0), new Point(1, 1), (A(ink, t.Dark ? 0.19 : 0.16), 0), (A(ink, 0.05), 1));
+        r["CardLineHover"] = Grad(new Point(0, 0), new Point(1, 1), (A(Mix(ink, accent, 0.5), 0.42), 0), (A(ink, 0.10), 1));
+        r["HeroBrush"] = Grad(new Point(0, 0), new Point(1, 1), (A(Mix(panel, accent, 0.30), glass ? 0.78 : 1), 0), (A(panel, glass ? 0.62 : 1), 0.55), (A(Mix(panel, accent, 0.14), glass ? 0.70 : 1), 1));
+
+        // Custom Fonts: any font installed on this PC; otherwise the bundled Manrope
         var font = s.Studio.Font;
-        r["UiFont"] = !string.IsNullOrWhiteSpace(font) && Fonts.SystemFontFamilies.Any(f => f.Source == font)
-            ? new FontFamily(font)
-            : new FontFamily("Segoe UI Variable Display, Segoe UI");
+        r["UiFont"] = !string.IsNullOrWhiteSpace(font) && Fonts.SystemFontFamilies.Any(f => f.Source == font) ? new FontFamily(font) : DefaultFont;
     }
 
     // ── share codes ──────────────────────────────────────────────
@@ -161,6 +186,21 @@ internal static class Dwm
 {
     [DllImport("dwmapi.dll")]
     static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    /// <summary>Rounded window corners on Windows 11 (ignored on Windows 10).</summary>
+    public static void Round(Window w)
+    {
+        try
+        {
+            var hwnd = new WindowInteropHelper(w).Handle;
+            if (hwnd == IntPtr.Zero) return;
+            var round = 2;                                  // DWMWCP_ROUND
+            DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int));
+        }
+        catch
+        {
+        }
+    }
 
     public static void ApplyTitleBar(Window w, bool dark)
     {

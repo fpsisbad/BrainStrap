@@ -17,7 +17,7 @@ namespace BrainStrap.Core;
 internal static class Session
 {
     public static bool Wanted(Settings s) =>
-        s.Perf.TrackSessions || s.Hud.Enabled || (s.Discord.Enabled && s.Discord.ClientId.Trim().Length > 0) || s.Life.GameModePlus || s.Life.Companions.Count > 0;
+        s.Perf.TrackSessions || s.Hud.Enabled || s.Crosshair.Enabled || (s.Discord.Enabled && s.Discord.ClientId.Trim().Length > 0) || s.Life.GameModePlus || s.Life.Companions.Count > 0;
 
     /// <summary>For games started from a join link: waits for Roblox to appear, then runs the session.</summary>
     public static async Task WatchAsync(string? placeId)
@@ -119,6 +119,8 @@ internal static class Session
         using var monitor = new RobloxMonitor(roblox);
         Hud? hud = (ov.Hud ?? (s.Hud.Enabled && Extensions.On(s, "brainhud"))) ? new Hud(s) : null;
         hud?.Show();
+        CrosshairOverlay? sight = s.Crosshair.Enabled ? new CrosshairOverlay(s) : null;
+        sight?.Show();
 
         double peakRam = 0, peakCpuT = 0, peakGpuT = 0;
         var tick = 0;
@@ -144,9 +146,11 @@ internal static class Session
                     rec.Events.Add(new ReplayEvent { T = Now(), Kind = "ping", Detail = $"Ping spike: {last:0} ms (usual {pg.Avg:0})" });
             }
             hud?.Update(live, DateTime.UtcNow - live.Started);
+            sight?.Sync(roblox);
         }
 
         hud?.Close();
+        sight?.Close();
         History.ClearLive();
         if (discord != null) { await discord.ClearAsync(); discord.Dispose(); }
 

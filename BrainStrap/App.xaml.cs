@@ -46,6 +46,13 @@ public partial class App : Application
                 return;
             }
 
+            // 1a) "Play Roblox" from inside BrainStrap, the Start menu or the Jump List
+            if (args.Any(a => a.Equals("--roblox", StringComparison.OrdinalIgnoreCase)))
+            {
+                Shutdown(await Launcher.RunAppAsync());
+                return;
+            }
+
             // 1b) a brainstrap:// link (RBLX.BRAIN website, Stream Deck, shortcuts). Every change asks first.
             var bs = args.FirstOrDefault(a => a.StartsWith("brainstrap:", StringComparison.OrdinalIgnoreCase));
             string? linkPage = null;

@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         ["store"] = Pages.StorePage.Build,
         ["flow"] = Pages.FlowPage.Build,
         ["connect"] = Pages.ConnectPage.Build,
+        ["launch"] = Pages.LaunchPage.Build,
     };
     string current = "home";
     int groupSeq;
@@ -37,17 +38,20 @@ public partial class MainWindow : Window
     public MainWindow(string? startPage = null)
     {
         InitializeComponent();
-        pages["launch"] = PageLaunch;
         pages["graphics"] = PageGraphics;
         pages["mods-classic"] = PageMods;
         pages["presence"] = PagePresence;
         pages["about"] = PageAbout;
 
-        SourceInitialized += (_, _) => Dwm.ApplyTitleBar(this, Themes.Effective(S).Dark);
+        BuildNav();
+        SourceInitialized += (_, _) => { Dwm.ApplyTitleBar(this, Themes.Effective(S).Dark); Dwm.Round(this); };
+        // a maximised window with custom chrome hangs over the screen edge by the resize border; pull the content back in
+        StateChanged += (_, _) => Root.Margin = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
         Loaded += (_, _) =>
         {
             LoadControls();
             ApplyBackground();
+            UpdateStatus();
             Go(startPage != null && (pages.ContainsKey(startPage) || dynPages.ContainsKey(startPage)) ? startPage : "home");
             JumpLists.Update(S);
         };
@@ -62,22 +66,90 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Every page in sidebar order (used by the screenshot mode).</summary>
-    public IEnumerable<string> PageKeys => ((Panel)NavHome.Parent).Children.OfType<RadioButton>().Select(r => (string)r.Tag);
+    public IEnumerable<string> PageKeys => NavList.Children.OfType<RadioButton>().Select(r => (string)r.Tag);
+
+    static readonly (string group, string key, string label, string icon)[] NavItems =
+    {
+        ("Play", "home", "Home", "home"), ("Play", "brainai", "BrainAI", "spark"), ("Play", "launch", "Launch", "rocket"),
+        ("Pillars", "extensions", "BrainExtensions", "blocks"), ("Pillars", "mods", "BrainMods", "layers"), ("Pillars", "flags", "BrainFlags", "flag"), ("Pillars", "connect", "BrainConnect", "link"),
+        ("Platform", "store", "BrainStore", "bag"), ("Platform", "flow", "BrainFlow", "flow"),
+        ("Tune", "performance", "Performance", "pulse"), ("Tune", "servers", "Servers", "globe"), ("Tune", "studio", "Studio", "drop"), ("Tune", "tools", "Tools", "sliders"), ("Tune", "life", "BrainLife", "heart"),
+        ("App", "presence", "Presence", "user"), ("App", "about", "About", "info"),
+    };
+
+    void BuildNav()
+    {
+        string? group = null;
+        foreach (var it in NavItems)
+        {
+            if (it.group != group)
+            {
+                group = it.group;
+                NavList.Children.Add(new TextBlock { Text = group.ToUpperInvariant(), Style = (Style)FindResource("Lbl"), FontSize = 9.5, Margin = new Thickness(13, NavList.Children.Count == 0 ? 2 : 13, 0, 6) });
+            }
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            var icon = Icons.Make(it.icon, 17);
+            icon.Margin = new Thickness(0, 0, 12, 0);
+            row.Children.Add(icon);
+            row.Children.Add(new TextBlock { Text = it.label, VerticalAlignment = VerticalAlignment.Center });
+            var rb = new RadioButton { Style = (Style)FindResource("Nav"), GroupName = "nav", Tag = it.key, Content = row };
+            rb.Click += Nav_Click;
+            NavList.Children.Add(rb);
+        }
+    }
+
+    void Search_Click(object sender, RoutedEventArgs e) => new CommandPalette(this, Commands()).ShowDialog();
+    void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>The status card at the bottom of the sidebar.</summary>
+    public void UpdateStatus()
+    {
+        var registered = ProtocolHandler.IsRegisteredToUs();
+        var roblox = RobloxInstall.Newest();
+        var level = !registered ? "Warn" : roblox == null ? "Warn" : "Ok";
+        SideStatus.Text = !registered ? "Not set up yet" : roblox == null ? "Roblox not installed" : "Ready to play";
+        SideSub.Text = $"{S.ActiveProfile} profile · v{Installer.Version}";
+        SideDot.SetResourceReference(ShapeFill, level);
+        SideHalo.SetResourceReference(ShapeFill, level);
+        if (SideHalo.RenderTransform is ScaleTransform st && !st.HasAnimatedProperties)
+        {
+            var pulse = new System.Windows.Media.Animation.DoubleAnimation(1, 2.4, TimeSpan.FromSeconds(1.8)) { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.QuadraticEase() };
+            st.BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
+            st.BeginAnimation(ScaleTransform.ScaleYProperty, pulse);
+            SideHalo.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0.45, 0, TimeSpan.FromSeconds(1.8)) { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever });
+        }
+    }
 
     /// <summary>Opens a page by key and ticks its sidebar entry.</summary>
     public void Go(string key)
     {
         if (key == "graphics") key = "flags";   // BrainFlags replaced the old Graphics page
-        foreach (var child in ((Panel)NavHome.Parent).Children.OfType<RadioButton>())
+        foreach (var child in NavList.Children.OfType<RadioButton>())
             child.IsChecked = (string)child.Tag == key;
+        var changed = key != current;
         ShowPage(key);
+        if (changed) Arrive();
     }
 
     /// <summary>Rebuilds the current page (after a change that affects what it shows).</summary>
     public void Refresh()
     {
-        if (dynPages.ContainsKey(current)) ShowPage(current);
-        else ShowPage(current);
+        // keep the scroll position: a rebuilt page should not jump back to the top
+        var at = (DynHost.Content as ScrollViewer)?.VerticalOffset ?? 0;
+        ShowPage(current);
+        if (at > 0 && DynHost.Content is ScrollViewer sv) sv.ScrollToVerticalOffset(at);
+        UpdateStatus();
+    }
+
+    /// <summary>The page slides up a little and fades in.</summary>
+    void Arrive()
+    {
+        var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
+        PageHost.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240)) { EasingFunction = ease });
+        if (PageHost.RenderTransform is TranslateTransform tt)
+            tt.BeginAnimation(TranslateTransform.YProperty, new System.Windows.Media.Animation.DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = ease });
     }
 
     /// <summary>Studio → Custom Backgrounds: animated silk, an image or a looping video behind the app.</summary>
@@ -92,15 +164,22 @@ public partial class MainWindow : Window
             {
                 case "silk":
                 {
-                    var accent = ((SolidColorBrush)FindResource("Accent")).Color;
-                    var b = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 1), Opacity = 0.22 };
-                    b.GradientStops.Add(new GradientStop(Colors.Transparent, 0));
-                    var mid = new GradientStop(accent, 0.4);
-                    b.GradientStops.Add(mid);
-                    b.GradientStops.Add(new GradientStop(Colors.Transparent, 0.8));
-                    mid.BeginAnimation(GradientStop.OffsetProperty, new System.Windows.Media.Animation.DoubleAnimation(0.1, 0.9, TimeSpan.FromSeconds(9))
-                        { AutoReverse = true, RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.SineEase() });
-                    BgLayer.Children.Add(new Border { Background = b });
+                    // the live silk, plus two soft glows in the accent colour that drift very slowly
+                    var t = Themes.Effective(S);
+                    Color C(string key) => ((SolidColorBrush)FindResource(key)).Color;
+                    Color bg = (Color)ColorConverter.ConvertFromString(t.Bg), ink = C("Ink"), accent = C("Accent");
+                    BgLayer.Children.Add(new Silk(bg, ink, accent, t.Dark, st.SilkStrength));
+                    foreach (var (size, x, y, alpha, secs) in new[] { (900.0, 520.0, -420.0, t.Dark ? 0.20 : 0.10, 26.0), (760.0, -360.0, 420.0, t.Dark ? 0.12 : 0.06, 34.0) })
+                    {
+                        var glow = new RadialGradientBrush();
+                        glow.GradientStops.Add(new GradientStop(Color.FromArgb((byte)(255 * alpha), accent.R, accent.G, accent.B), 0));
+                        glow.GradientStops.Add(new GradientStop(Color.FromArgb(0, accent.R, accent.G, accent.B), 1));
+                        var move = new TranslateTransform(x, y);
+                        var blob = new System.Windows.Shapes.Ellipse { Width = size, Height = size, Fill = glow, RenderTransform = move, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                        move.BeginAnimation(TranslateTransform.XProperty, new System.Windows.Media.Animation.DoubleAnimation(x, x + (x > 0 ? -90 : 90), TimeSpan.FromSeconds(secs))
+                            { AutoReverse = true, RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.SineEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut } });
+                        BgLayer.Children.Add(blob);
+                    }
                     break;
                 }
                 case "image" when File.Exists(st.BackgroundPath):
@@ -220,6 +299,7 @@ public partial class MainWindow : Window
     void ShowPage(string key)
     {
         current = key;
+        Crumb.Text = "BRAINSTRAP   /   " + (NavItems.FirstOrDefault(n => n.key == key).label ?? key).ToUpperInvariant();
         foreach (var kv in pages) kv.Value.Visibility = kv.Key == key ? Visibility.Visible : Visibility.Collapsed;
         if (dynPages.TryGetValue(key, out var build))
         {
@@ -238,7 +318,6 @@ public partial class MainWindow : Window
         {
             case "graphics": RenderGraphics(); break;
             case "mods-classic": RenderMods(); break;
-            case "launch": _ = RefreshLaunchAsync(); break;
         }
     }
 

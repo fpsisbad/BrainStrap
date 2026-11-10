@@ -14,8 +14,11 @@ namespace BrainStrap.UI;
 /// <summary>Custom Launch Animations: the launch screen shown between pressing Play and Roblox appearing.</summary>
 internal sealed class LaunchSplash : Window
 {
-    readonly TextBlock status, detail, tip;
+    readonly TextBlock status, detail, tip, percent;
+    readonly Border bar, track;
+    readonly TranslateTransform sweep = new(-140, 0);
     readonly string style;
+    const double CardWidth = 500;
 
     public LaunchSplash(Settings s)
     {
@@ -27,82 +30,89 @@ internal sealed class LaunchSplash : Window
         ShowInTaskbar = false;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        Width = 460;
+        Width = CardWidth + 80;
         SizeToContent = SizeToContent.Height;
         FontFamily = (FontFamily)Application.Current.FindResource("UiFont");
+        SetResourceReference(ForegroundProperty, "Ink");
 
-        var card = new Border { CornerRadius = new CornerRadius(22), Padding = new Thickness(30, 28, 30, 26), Margin = new Thickness(24), ClipToBounds = true };
+        var card = new Border { CornerRadius = new CornerRadius(26), Margin = new Thickness(40), BorderThickness = new Thickness(1) };
         card.SetResourceReference(Border.BackgroundProperty, "Bg");
-        card.SetResourceReference(Border.BorderBrushProperty, "Line2");
-        card.BorderThickness = new Thickness(1);
-        card.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 40, ShadowDepth = 10, Opacity = 0.5, Color = Colors.Black };
+        card.SetResourceReference(Border.BorderBrushProperty, "CardLineHover");
+        card.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 46, ShadowDepth = 14, Opacity = 0.6, Color = Colors.Black, Direction = 270 };
 
+        // everything inside is clipped to the rounded card
         var layers = new Grid();
+        layers.SizeChanged += (_, _) => layers.Clip = new RectangleGeometry(new Rect(0, 0, layers.ActualWidth, layers.ActualHeight), 25, 25);
+        var theme = Themes.Effective(s);
+        Color Res(string key) => ((SolidColorBrush)Application.Current.FindResource(key)).Color;
         if (style == "silk")
-        {
-            // a slowly moving satin sheen across the card
-            var accent = ((SolidColorBrush)Application.Current.FindResource("Accent")).Color;
-            var sheen = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 1), Opacity = 0.16 };
-            sheen.GradientStops.Add(new GradientStop(Colors.Transparent, 0));
-            var mid = new GradientStop(accent, 0.3);
-            sheen.GradientStops.Add(mid);
-            sheen.GradientStops.Add(new GradientStop(Colors.Transparent, 0.6));
-            mid.BeginAnimation(GradientStop.OffsetProperty, new DoubleAnimation(0.05, 0.95, TimeSpan.FromSeconds(2.4)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase() });
-            layers.Children.Add(new Border { Background = sheen, Margin = new Thickness(-30, -28, -30, -26) });
-        }
+            layers.Children.Add(new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 1, 3.2, 1.9, -0.4));
         if (!string.IsNullOrEmpty(s.Studio.SplashImage) && File.Exists(s.Studio.SplashImage))
         {
             try
             {
                 var img = new BitmapImage();
-                img.BeginInit(); img.UriSource = new Uri(s.Studio.SplashImage); img.DecodePixelWidth = 920; img.CacheOption = BitmapCacheOption.OnLoad; img.EndInit();
-                layers.Children.Add(new Border { Margin = new Thickness(-30, -28, -30, -26), Opacity = 0.35, Background = new ImageBrush(img) { Stretch = Stretch.UniformToFill } });
+                img.BeginInit(); img.UriSource = new Uri(s.Studio.SplashImage); img.DecodePixelWidth = 1000; img.CacheOption = BitmapCacheOption.OnLoad; img.EndInit();
+                layers.Children.Add(new Border { Opacity = 0.4, Background = new ImageBrush(img) { Stretch = Stretch.UniformToFill } });
             }
             catch { }
         }
+        // a veil so the text always reads, whatever is behind it
+        var veil = new Border { Opacity = style == "silk" ? 0.38 : 0 };
+        veil.SetResourceReference(Border.BackgroundProperty, "Bg");
+        layers.Children.Add(veil);
 
-        var body = new StackPanel();
-        var logo = new Image { Width = 64, Height = 64, HorizontalAlignment = HorizontalAlignment.Left, Source = new BitmapImage(new Uri("pack://application:,,,/Assets/brainstrap-mark.png")) };
-        RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
-        if (style == "pulse")
+        var body = new StackPanel { Margin = new Thickness(36, 34, 36, 30) };
+        if (style != "minimal")
         {
-            var st = new ScaleTransform(1, 1);
-            logo.RenderTransform = st;
-            logo.RenderTransformOrigin = new Point(0.5, 0.5);
-            var pulse = new DoubleAnimation(1, 1.12, TimeSpan.FromSeconds(0.7)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase() };
-            st.BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
-            st.BeginAnimation(ScaleTransform.ScaleYProperty, pulse);
+            // the mark, with a soft halo that breathes
+            var halo = new System.Windows.Shapes.Ellipse { Width = 120, Height = 120, Opacity = 0.5, RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new ScaleTransform(1, 1) };
+            var glow = new RadialGradientBrush();
+            var ac = Res("Accent");
+            glow.GradientStops.Add(new GradientStop(Color.FromArgb(120, ac.R, ac.G, ac.B), 0));
+            glow.GradientStops.Add(new GradientStop(Color.FromArgb(0, ac.R, ac.G, ac.B), 1));
+            halo.Fill = glow;
+            var breathe = new DoubleAnimation(0.85, 1.25, TimeSpan.FromSeconds(style == "pulse" ? 0.8 : 1.6)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut } };
+            ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, breathe);
+            ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, breathe);
+            var logo = new Image { Width = 68, Height = 68, Source = new BitmapImage(new Uri("pack://application:,,,/Assets/brainstrap-mark.png")) };
+            RenderOptions.SetBitmapScalingMode(logo, BitmapScalingMode.HighQuality);
+            var mark = new Grid { Width = 120, Height = 120, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(-26, -26, 0, -14) };
+            mark.Children.Add(halo);
+            mark.Children.Add(logo);
+            body.Children.Add(mark);
         }
-        if (style != "minimal") body.Children.Add(logo);
-        var title = Ui.Text("BrainStrap", 26, "Ink", FontWeights.Bold);
-        title.Margin = new Thickness(0, style == "minimal" ? 0 : 16, 0, 4);
-        body.Children.Add(title);
-        status = Ui.Text("Starting…", 14, "Muted", FontWeights.SemiBold);
-        detail = Ui.Text("", 12, "Dim", mono: true);
-        detail.Margin = new Thickness(0, 6, 0, 0);
+        var eyebrow = Ui.Text("BRAINSTRAP  ·  " + s.ActiveProfile.ToUpperInvariant() + " PROFILE", 10, "Muted", FontWeights.Medium, true);
+        eyebrow.Margin = new Thickness(0, 0, 0, 6);
+        body.Children.Add(eyebrow);
+        status = Ui.Text("Starting…", 26, "Ink", FontWeights.ExtraBold);
+        status.LineHeight = 31;
+        body.Children.Add(status);
+        detail = Ui.Text("", 12, "Muted", mono: true);
+        detail.Margin = new Thickness(0, 8, 0, 0);
+        body.Children.Add(detail);
         tip = Ui.Text("", 12.5, "Accent");
         tip.Margin = new Thickness(0, 10, 0, 0);
         tip.Visibility = Visibility.Collapsed;
-        body.Children.Add(status);
-        body.Children.Add(detail);
         body.Children.Add(tip);
 
-        // indeterminate progress line
-        var track = new Border { Height = 3, CornerRadius = new CornerRadius(2), Margin = new Thickness(0, 20, 0, 0), ClipToBounds = true };
+        // progress: a sweeping light while waiting, a filling bar while downloading
+        track = new Border { Height = 5, CornerRadius = new CornerRadius(2.5), Margin = new Thickness(0, 24, 0, 0), ClipToBounds = true };
         track.SetResourceReference(Border.BackgroundProperty, "Pill");
-        var bar = new Border { Width = 110, Height = 3, CornerRadius = new CornerRadius(2), HorizontalAlignment = HorizontalAlignment.Left };
+        bar = new Border { Width = 140, Height = 5, CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left, RenderTransform = sweep };
         bar.SetResourceReference(Border.BackgroundProperty, "Accent");
-        var tt = new TranslateTransform(-110, 0);
-        bar.RenderTransform = tt;
         track.Child = bar;
-        tt.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(-110, 420, TimeSpan.FromSeconds(1.3)) { RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new QuadraticEase() });
+        sweep.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(-140, CardWidth - 70, TimeSpan.FromSeconds(1.25)) { RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut } });
         body.Children.Add(track);
+        percent = Ui.Text("", 10.5, "Dim", mono: true);
+        percent.Margin = new Thickness(0, 8, 0, 0);
+        body.Children.Add(percent);
 
         layers.Children.Add(body);
         card.Child = layers;
         Content = card;
         Opacity = 0;
-        Loaded += (_, _) => BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(260)));
+        Loaded += (_, _) => BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(280)));
     }
 
     public void Status(string text) => status.Text = text;
@@ -113,16 +123,127 @@ internal sealed class LaunchSplash : Window
         if (!string.IsNullOrEmpty(tipText)) { tip.Text = tipText; tip.Visibility = Visibility.Visible; }
     }
 
-    public async Task FinishAsync()
+    /// <summary>Switches the bar from "waiting" to a real 0..1 amount.</summary>
+    public void Progress(double fraction)
     {
-        status.Text = "Have fun.";
-        await Task.Delay(500);
-        var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+        fraction = Math.Clamp(fraction, 0, 1);
+        sweep.BeginAnimation(TranslateTransform.XProperty, null);
+        sweep.X = 0;
+        var w = Math.Max(1, track.ActualWidth);
+        bar.BeginAnimation(WidthProperty, new DoubleAnimation(Math.Max(6, w * fraction), TimeSpan.FromMilliseconds(220)));
+        percent.Text = fraction >= 1 ? "" : $"{fraction * 100:0}%";
+    }
+
+    /// <summary>Feeds the Roblox installer's progress into this window.</summary>
+    public IProgress<RobloxDeploy.Step> Reporter() => new Progress<RobloxDeploy.Step>(p =>
+    {
+        status.Text = p.Stage;
+        detail.Text = p.Detail;
+        Progress(p.Fraction);
+    });
+
+    public async Task FinishAsync(string? text = null)
+    {
+        status.Text = text ?? "Have fun.";
+        Progress(1);
+        await Task.Delay(520);
+        var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(320));
         var done = new TaskCompletionSource();
         fade.Completed += (_, _) => done.TrySetResult();
         BeginAnimation(OpacityProperty, fade);
         await Task.WhenAny(done.Task, Task.Delay(800));
         Close();
+    }
+}
+
+/// <summary>
+/// BrainSight: a crosshair in the centre of the screen. It is an ordinary see-through window that belongs to
+/// BrainStrap and ignores the mouse, the same idea as the crosshair many gaming monitors can draw. It shows only
+/// while Roblox is the window in front, and it never reads or changes anything in the game.
+/// </summary>
+internal sealed class CrosshairOverlay : Window
+{
+    [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr hwnd, int index);
+    [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr hwnd, int index, int value);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+
+    public CrosshairOverlay(Settings s)
+    {
+        WindowStyle = WindowStyle.None;
+        AllowsTransparency = true;
+        Background = Brushes.Transparent;
+        Topmost = true;
+        ShowInTaskbar = false;
+        ShowActivated = false;
+        Focusable = false;
+        ResizeMode = ResizeMode.NoResize;
+        var box = s.Crosshair.Size * 2 + 24;
+        Width = box; Height = box;
+        Left = (SystemParameters.PrimaryScreenWidth - box) / 2;
+        Top = (SystemParameters.PrimaryScreenHeight - box) / 2;
+        Content = Draw(s.Crosshair, box);
+        SourceInitialized += (_, _) =>
+        {
+            var h = new WindowInteropHelper(this).Handle;
+            SetWindowLong(h, -20, GetWindowLong(h, -20) | 0x20 | 0x80 | 0x80000 | 0x08000000);   // click-through, no taskbar entry, layered, never takes focus
+        };
+    }
+
+    /// <summary>The crosshair picture (also used for the preview on the BrainLife page).</summary>
+    public static FrameworkElement Draw(CrosshairSettings c, double box)
+    {
+        var canvas = new Canvas { Width = box, Height = box, Opacity = c.Opacity, IsHitTestVisible = false };
+        var color = Themes.IsHex(c.Color) ? (Color)ColorConverter.ConvertFromString(c.Color) : Colors.White;
+        var fill = new SolidColorBrush(color);
+        var edge = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0));
+        double mid = box / 2, t = c.Thickness, len = c.Size, gap = c.Gap;
+        void Line(double x1, double y1, double x2, double y2)
+        {
+            if (c.Outline) canvas.Children.Add(new System.Windows.Shapes.Line { X1 = x1, Y1 = y1, X2 = x2, Y2 = y2, Stroke = edge, StrokeThickness = t + 2, StrokeStartLineCap = PenLineCap.Square, StrokeEndLineCap = PenLineCap.Square });
+            canvas.Children.Add(new System.Windows.Shapes.Line { X1 = x1, Y1 = y1, X2 = x2, Y2 = y2, Stroke = fill, StrokeThickness = t });
+        }
+        void Ring(double radius, bool solid)
+        {
+            var e = new System.Windows.Shapes.Ellipse { Width = radius * 2, Height = radius * 2, Stroke = solid ? (c.Outline ? edge : null) : fill, StrokeThickness = solid ? 1 : t, Fill = solid ? fill : null };
+            Canvas.SetLeft(e, mid - radius); Canvas.SetTop(e, mid - radius);
+            if (!solid && c.Outline)
+            {
+                var o = new System.Windows.Shapes.Ellipse { Width = radius * 2 + 2, Height = radius * 2 + 2, Stroke = edge, StrokeThickness = t + 2 };
+                Canvas.SetLeft(o, mid - radius - 1); Canvas.SetTop(o, mid - radius - 1);
+                canvas.Children.Add(o);
+            }
+            canvas.Children.Add(e);
+        }
+        switch (c.Shape)
+        {
+            case "dot":
+                Ring(Math.Max(1.5, t * 1.5), true);
+                break;
+            case "circle":
+                Ring(len / 2, false);
+                Ring(Math.Max(1, t * 0.8), true);
+                break;
+            case "tee":
+                Line(mid - gap - len, mid, mid - gap, mid); Line(mid + gap, mid, mid + gap + len, mid); Line(mid, mid + gap, mid, mid + gap + len);
+                break;
+            default:
+                Line(mid - gap - len, mid, mid - gap, mid); Line(mid + gap, mid, mid + gap + len, mid);
+                Line(mid, mid - gap - len, mid, mid - gap); Line(mid, mid + gap, mid, mid + gap + len);
+                break;
+        }
+        return canvas;
+    }
+
+    /// <summary>Shows the crosshair only while Roblox is the window in front.</summary>
+    public void Sync(System.Diagnostics.Process roblox)
+    {
+        try
+        {
+            GetWindowThreadProcessId(GetForegroundWindow(), out var pid);
+            Visibility = pid == (uint)roblox.Id ? Visibility.Visible : Visibility.Hidden;
+        }
+        catch { }
     }
 }
 

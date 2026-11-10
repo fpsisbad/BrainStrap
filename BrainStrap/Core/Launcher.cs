@@ -13,16 +13,17 @@ internal sealed record Prepared(InstalledVersion Version, string Profile, int Fl
 /// <summary>
 /// What happens when you press Play on roblox.com and Windows hands BrainStrap a roblox-player: link.
 ///   1. Understand the link. Anything unusual goes straight to Roblox's own launcher, untouched.
-///   2. If Roblox is missing or out of date, Roblox's own launcher installs/updates it, then BrainStrap takes the link back.
+///   2. If Roblox is missing or out of date, BrainStrap downloads it itself from Roblox's servers (RobloxDeploy).
+///      Only if that fails does Roblox's own launcher get involved, when there is one.
 ///   3. Otherwise: launch screen, pick the right profile, apply flags and mods, start RobloxPlayerBeta.exe, run the session.
 /// BrainStrap never injects into, hooks, patches or reads the memory of the Roblox process.
 /// </summary>
 internal static class Launcher
 {
     /// <summary>Picks the profile (game → battery → active), applies mods and flags. Used by Play and by server joins.</summary>
-    public static Prepared Prepare(Settings s, string? placeId)
+    public static Prepared Prepare(Settings s, string? placeId, InstalledVersion? use = null)
     {
-        var installed = RobloxInstall.Newest() ?? throw new InvalidOperationException("Roblox is not installed.");
+        var installed = use ?? RobloxInstall.Newest() ?? throw new InvalidOperationException("Roblox is not installed.");
         var profileName = s.ProfileNameFor(placeId);
         string? tip = null;
         var ov = Flow.Fire(s, "launch", placeId);                       // BrainFlow: "when Roblox launches / when I join X"
@@ -62,19 +63,81 @@ internal static class Launcher
         return new Prepared(installed, profileName, flags.Count, s.ModsEnabled && !safe ? mods : 0, tip, ov);
     }
 
+    /// <summary>The Play button on roblox.com (a roblox-player: link).</summary>
     public static async Task<int> RunAsync(string uri)
+    {
+        var req = LaunchRequest.Parse(uri);
+        if (req == null)
+        {
+            Logger.Info("not a plain play link; handing it to Roblox's launcher");
+            return await HandOff(uri, AppState.S, "BrainStrap handed this link to Roblox's own launcher.");
+        }
+        return await LaunchAsync(req.BuildArgs(), req.PlaceId, uri);
+    }
+
+    /// <summary>"Play Roblox" inside BrainStrap: opens the Roblox app itself, with your setup applied.</summary>
+    public static Task<int> RunAppAsync() => LaunchAsync(new List<string> { "--app" }, null, null);
+
+    /// <summary>Install or update Roblox now (the button on the Launch page). Returns a problem to show, or null.</summary>
+    public static async Task<string?> InstallNowAsync()
+    {
+        var s = AppState.S;
+        var splash = new LaunchSplash(s);
+        splash.Show();
+        try
+        {
+            splash.Status("Checking Roblox…");
+            var latest = await RobloxInstall.LatestVersionAsync();
+            if (latest == null) return "Couldn't reach Roblox to see which version is current.";
+            await RobloxDeploy.InstallAsync(latest, splash.Reporter());
+            RobloxDeploy.Prune(latest);
+            await splash.FinishAsync("Roblox is ready.");
+            splash = null;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("install failed", ex);
+            return ex.Message;
+        }
+        finally { splash?.Close(); }
+    }
+
+    /// <summary>Makes sure a current Roblox is installed. Returns the copy to start, or null when Roblox's own launcher has to take over.</summary>
+    static async Task<InstalledVersion?> EnsureRobloxAsync(Settings s, LaunchSplash? splash)
+    {
+        var installed = RobloxInstall.Newest();
+        var latest = s.CheckForUpdates || installed == null ? await RobloxInstall.LatestVersionAsync() : null;
+        if (latest != null && RobloxInstall.Find(latest) is { } exact) installed = exact;
+        var current = installed != null && (latest == null || installed.Name.Equals(latest, StringComparison.OrdinalIgnoreCase));
+        if (current) return installed;
+
+        if (s.ManageRoblox && latest != null)
+        {
+            try
+            {
+                splash?.Status(installed == null ? "Installing Roblox…" : "Updating Roblox…");
+                var fresh = await RobloxDeploy.InstallAsync(latest, splash?.Reporter());
+                RobloxDeploy.Prune(latest);
+                return fresh;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("BrainStrap's own Roblox install failed; falling back", ex);
+                splash?.Status("Couldn't update Roblox directly, trying another way…");
+                await Task.Delay(900);
+            }
+        }
+        // fall back: Roblox's own launcher if it is on this PC, otherwise the copy we have (Roblox will say if it is too old)
+        return RobloxInstall.FindOfficialLauncher(s) != null ? null : installed;
+    }
+
+    static async Task<int> LaunchAsync(List<string> args, string? placeId, string? uri)
     {
         var s = AppState.S;
         LaunchSplash? splash = null;
         try
         {
-            var req = LaunchRequest.Parse(uri);
-            if (req == null)
-            {
-                Logger.Info("not a plain play link; handing it to Roblox's launcher");
-                return await HandOff(uri, s, "BrainStrap handed this link to Roblox's own launcher.");
-            }
-
             if (s.Studio.Splash != "none")
             {
                 Themes.Apply(s);
@@ -83,28 +146,37 @@ internal static class Launcher
                 splash.Status("Checking Roblox…");
             }
 
-            var installed = RobloxInstall.Newest();
-            var latest = s.CheckForUpdates ? await RobloxInstall.LatestVersionAsync() : null;
-            if (installed == null || (latest != null && !installed.Name.Equals(latest, StringComparison.OrdinalIgnoreCase)))
+            var before = RobloxInstall.Newest();
+            var ready = await EnsureRobloxAsync(s, splash);
+            if (ready == null)
             {
-                splash?.Status(installed == null ? "Installing Roblox with Roblox's own installer…" : "Updating Roblox with Roblox's own updater…");
+                if (uri == null || RobloxInstall.FindOfficialLauncher(s) == null)
+                {
+                    splash?.Close();
+                    MessageBox.Show("BrainStrap couldn't download Roblox just now.\n\nCheck your internet connection and try again. Details are in the log folder (About → Open logs).",
+                        "BrainStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return 2;
+                }
+                splash?.Status(before == null ? "Installing Roblox with Roblox's own installer…" : "Updating Roblox with Roblox's own updater…");
                 await Task.Delay(400);
                 splash?.Close();
                 splash = null;
-                return await HandOff(uri, s, installed == null ? "Roblox is not installed yet, so Roblox's own launcher will set it up first." : null);
+                return await HandOff(uri, s, null);
             }
-            if (latest != null) _ = UpdateInspector.RefreshAsync();
+            _ = UpdateInspector.RefreshAsync();
+            Tuning.Apply(s, ready.PlayerExe);
 
             splash?.Status(s.SafeMode ? "Safe mode: no flags or mods" : "Applying your setup…");
-            var prep = Prepare(s, req.PlaceId);
+            splash?.Progress(1);
+            var prep = Prepare(s, placeId, ready);
             splash?.Detail($"{prep.Profile} profile · {prep.Flags} flag(s){(prep.Mods > 0 ? $" · {prep.Mods} mod file(s)" : "")}", prep.Tip);
 
             var psi = new ProcessStartInfo(prep.Version.PlayerExe) { WorkingDirectory = prep.Version.Folder, UseShellExecute = false };
-            foreach (var a in req.BuildArgs()) psi.ArgumentList.Add(a);
-            Logger.Info($"starting {prep.Version.Name} (place {req.PlaceId ?? "?"}, {prep.Flags} flag(s){(s.SafeMode ? ", safe mode" : "")})");
+            foreach (var a in args) psi.ArgumentList.Add(a);
+            Logger.Info($"starting {prep.Version.Name} (place {placeId ?? "?"}, {prep.Flags} flag(s){(s.SafeMode ? ", safe mode" : "")})");
             splash?.Status("Starting Roblox…");
             var proc = Process.Start(psi);
-            if (proc == null) { splash?.Close(); return await HandOff(uri, s, null); }
+            if (proc == null) { splash?.Close(); return uri != null ? await HandOff(uri, s, null) : 1; }
             PlayLaunchSound(s);
 
             if (splash != null)
@@ -119,22 +191,19 @@ internal static class Launcher
                 splash = null;
             }
 
-            if (Session.Wanted(s) || prep.Overrides.Hud == true || prep.Overrides.Track) await Session.RunAsync(proc, req.PlaceId, prep.Profile, DateTime.UtcNow, prep.Overrides);
+            if (Session.Wanted(s) || prep.Overrides.Hud == true || prep.Overrides.Track) await Session.RunAsync(proc, placeId, prep.Profile, DateTime.UtcNow, prep.Overrides);
             else if (!s.CloseOnLaunch) await proc.WaitForExitAsync();
             return 0;
         }
         catch (Exception ex)
         {
-            Logger.Error("launch failed; falling back to Roblox's launcher", ex);
+            Logger.Error("launch failed", ex);
             splash?.Close();
-            try { return await HandOff(uri, s, null); }
-            catch (Exception ex2)
-            {
-                Logger.Error("fallback failed too", ex2);
-                MessageBox.Show("BrainStrap could not start Roblox.\n\nTry the Play button again, or open BrainStrap and choose \"Restore Roblox launcher\" on the Launch page.\n\nDetails are in the log folder.",
-                    "BrainStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return 1;
-            }
+            try { if (uri != null) return await HandOff(uri, s, null); }
+            catch (Exception ex2) { Logger.Error("fallback failed too", ex2); }
+            MessageBox.Show("BrainStrap could not start Roblox.\n\n" + ex.Message + "\n\nDetails are in the log folder (About → Open logs).",
+                "BrainStrap", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return 1;
         }
     }
 
@@ -161,7 +230,7 @@ internal static class Launcher
         var official = RobloxInstall.FindOfficialLauncher(s);
         if (official == null)
         {
-            MessageBox.Show("Roblox is not installed on this PC yet.\n\nInstall it once from roblox.com/download, then press Play again. BrainStrap uses Roblox's own installer and does not download Roblox itself.",
+            MessageBox.Show("This kind of Roblox link needs Roblox's own launcher, which isn't on this PC.\n\nPress Play on a game instead, or install Roblox once from roblox.com/download.",
                 "BrainStrap", MessageBoxButton.OK, MessageBoxImage.Information);
             return 2;
         }

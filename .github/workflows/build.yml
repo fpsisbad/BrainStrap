@@ -64,6 +64,7 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
+          try { Set-DisplayResolution -Width 1920 -Height 1080 -Force } catch { "could not change the display size: $_" }
           $p = Start-Process "$PWD\out\BrainStrap.exe" -ArgumentList '--shots', "$PWD\shots" -PassThru
           if (-not $p.WaitForExit(300000)) { $p.Kill(); "timed out" | Out-File shots\log.txt -Append }
           Get-ChildItem shots | Select-Object Name, Length

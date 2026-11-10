@@ -103,10 +103,12 @@ internal sealed class StudioSettings
     public List<ThemeDef> CustomThemes { get; set; } = new();
     public string? Font { get; set; }
     public bool Minimal { get; set; }
-    public string Background { get; set; } = "none";      // none | silk | image | video
+    public string Background { get; set; } = "silk";      // silk (live) | none | image | video
     public string? BackgroundPath { get; set; }
     public double BackgroundDim { get; set; } = 0.6;
     public string Splash { get; set; } = "silk";           // silk | pulse | minimal | none
+    /// <summary>How strong the live silk backdrop is behind the app (0.2 to 1).</summary>
+    public double SilkStrength { get; set; } = 1;
     public string? SplashImage { get; set; }
     public string? LaunchSound { get; set; }
     public double LaunchSoundVolume { get; set; } = 0.6;
@@ -133,6 +135,26 @@ internal sealed class LifeSettings
     public List<Companion> Companions { get; set; } = new();
 }
 
+/// <summary>BrainSight: a crosshair drawn by BrainStrap in its own click-through window over the screen centre.</summary>
+internal sealed class CrosshairSettings
+{
+    public bool Enabled { get; set; }
+    public string Shape { get; set; } = "cross";    // cross | dot | circle | tee
+    public int Size { get; set; } = 22;
+    public int Thickness { get; set; } = 2;
+    public int Gap { get; set; } = 4;
+    public string Color { get; set; } = "#FFFFFF";
+    public double Opacity { get; set; } = 0.9;
+    public bool Outline { get; set; } = true;
+}
+
+/// <summary>Windows' own per-app settings for Roblox (Settings → Display → Graphics, and the Compatibility tab).</summary>
+internal sealed class TuningSettings
+{
+    public bool HighPerformanceGpu { get; set; }
+    public bool NoFullscreenOptimizations { get; set; }
+}
+
 internal sealed class Settings
 {
     public int SchemaVersion { get; set; } = 2;
@@ -146,6 +168,10 @@ internal sealed class Settings
     public bool SafeMode { get; set; }
     public bool CheckForUpdates { get; set; } = true;
     public bool KeepRegistered { get; set; } = true;
+    /// <summary>BrainStrap downloads and updates Roblox itself, straight from Roblox's servers. No other launcher needed.</summary>
+    public bool ManageRoblox { get; set; } = true;
+    /// <summary>Which design generation these settings were last opened with (one-time upgrades).</summary>
+    public int Look { get; set; }
 
     // graphics
     public string FlagFormat { get; set; } = "native";
@@ -163,6 +189,8 @@ internal sealed class Settings
     public StudioSettings Studio { get; set; } = new();
     public LifeSettings Life { get; set; } = new();
     public PlatformSettings Platform { get; set; } = new();
+    public CrosshairSettings Crosshair { get; set; } = new();
+    public TuningSettings Tuning { get; set; } = new();
 
     public string? OriginalHandlerCommand { get; set; }
 
@@ -278,6 +306,19 @@ internal static class SettingsStore
         foreach (var w in new[] { "clock", "stats", "fpschart", "spotify", "notes" })
             if (!s.Studio.HomeWidgets.Contains(w)) { s.Studio.HomeWidgets.Add(w); if (w is "clock" or "spotify") s.Studio.HiddenWidgets.Add(w); }
         s.Life.Companions ??= new();
+        s.Crosshair ??= new();
+        s.Tuning ??= new();
+        if (s.Look < 3)
+        {
+            // the 3rd-generation look: the live silk backdrop is on unless a picture or video was chosen
+            if (s.Studio.Background == "none") s.Studio.Background = "silk";
+            s.Look = 3;
+        }
+        s.Studio.SilkStrength = Math.Clamp(s.Studio.SilkStrength, 0.2, 1);
+        s.Crosshair.Size = Math.Clamp(s.Crosshair.Size, 4, 120);
+        s.Crosshair.Thickness = Math.Clamp(s.Crosshair.Thickness, 1, 12);
+        s.Crosshair.Gap = Math.Clamp(s.Crosshair.Gap, 0, 60);
+        s.Crosshair.Opacity = Math.Clamp(s.Crosshair.Opacity, 0.2, 1);
         if (!s.Profiles.ContainsKey("Default")) s.Profiles["Default"] = new FlagProfile();
         foreach (var k in s.Profiles.Keys.ToList())
         {

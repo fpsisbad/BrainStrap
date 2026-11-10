@@ -26,14 +26,36 @@ internal static class HomePage
         var s = AppState.S;
         var hour = DateTime.Now.Hour;
         var greet = hour < 5 ? "Late night session?" : hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening.";
-        var page = Ui.Page(greet, "Your Roblox, set up exactly the way you like it.", out var body);
+        var page = Ui.Page("", "", out var body);
+        var registered = ProtocolHandler.IsRegisteredToUs();
+        var roblox = RobloxInstall.Newest();
+        var flags = FlagCatalog.Resolve(FlagCatalog.Load(), s.Current, s.FlagFormat).Count;
+
+        // ── the hero: one obvious thing to do ──
+        var line = !registered ? "One click makes BrainStrap your Roblox launcher. It downloads Roblox itself, keeps it up to date and applies your setup every time you play."
+            : roblox == null ? "Roblox isn't on this PC yet. Press Play and BrainStrap downloads it straight from Roblox, then starts it."
+            : "Roblox is installed and your setup is applied on every launch.";
+        var actions = new List<UIElement>();
+        if (!registered) actions.Add(Ui.IconPill("bolt", "Set up BrainStrap", () => { Installer.Install(s); host.Refresh(); }));
+        actions.Add(Ui.IconPill("play", roblox == null ? "Install and play Roblox" : "Play Roblox", () => PlayRoblox(), ghost: !registered));
+        actions.Add(Ui.IconPill("spark", "Ask BrainAI", () => host.Go("brainai"), ghost: true));
+        body.Children.Add(Ui.Hero($"{DateTime.Now:dddd d MMMM}  ·  {s.ActiveProfile} profile", greet, line, actions.ToArray()));
+
+        // ── at a glance ──
+        var week = History.Sessions().Where(r => r.Start > DateTime.Now.AddDays(-7)).ToList();
+        var lastFps = History.Sessions().FirstOrDefault(r => r.Fps != null)?.Fps;
+        body.Children.Add(Ui.TileRow(
+            Ui.StatTile("shield", registered ? "Active" : "Not set up", registered ? "BrainStrap handles Play" : "Roblox's launcher handles Play", registered ? "Ok" : "Warn", () => host.Go("launch")),
+            Ui.StatTile("download", roblox == null ? "Not installed" : "Installed", roblox == null ? "BrainStrap will download it" : (RobloxInstall.IsOwn(roblox) ? "Roblox · managed by BrainStrap" : "Roblox · " + roblox.Name[..Math.Min(16, roblox.Name.Length)]), roblox == null ? "Warn" : "Ink", () => host.Go("launch")),
+            Ui.StatTile("flag", s.ActiveProfile, $"{flags} flag(s) · {s.GameProfiles.Count} game profile(s)" + (s.SafeMode ? " · safe mode" : ""), "Ink", () => host.Go("flags")),
+            Ui.StatTile("pulse", lastFps != null ? $"{lastFps.AvgFps:0} FPS" : week.Count > 0 ? $"{week.Sum(r => r.Minutes) / 60:0.0} h" : "—", lastFps != null ? "last measured session" : week.Count > 0 ? "played this week" : "no sessions yet", "Ink", () => host.Go("performance"))));
 
         foreach (var w in s.Studio.HomeWidgets.Where(w => !s.Studio.HiddenWidgets.Contains(w)))
         {
             UIElement? card = w switch
             {
                 "play" => Play(host),
-                "status" => Status(host, s),
+                "status" => null,   // the tiles under the hero show this now
                 "boost" => Boost(host),
                 "session" => SessionCard(),
                 "server" => Server(host),
@@ -83,6 +105,14 @@ internal static class HomePage
         return string.IsNullOrWhiteSpace(note) ? null : Ui.Card(Ui.Lbl("Note · " + s.ActiveProfile + " profile"), Ui.Text(note, 14), Ui.Buttons(Ui.Ghost("Edit notes", () => host.Go("extensions"))));
     }
 
+    /// <summary>Starts Roblox through BrainStrap's own launch flow (a second copy of BrainStrap runs it, like the Play button does).</summary>
+    public static void PlayRoblox()
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo(Paths.SelfExe) { UseShellExecute = false };
+        psi.ArgumentList.Add("--roblox");
+        System.Diagnostics.Process.Start(psi);
+    }
+
     static UIElement Play(MainWindow host)
     {
         var lib = new WrapPanel();
@@ -91,9 +121,8 @@ internal static class HomePage
         foreach (var f in AppState.S.Servers.Favorites.Where(f => f.PrivateLinkProtected == null && RobloxApi.IsId(f.PlaceId)).Take(Math.Max(0, 6 - lib.Children.Count)))
             lib.Children.Add(LifePage.GameTile(host, f.PlaceId, f.Name, "favourite"));
         if (lib.Children.Count == 0)
-            return Ui.Card(Ui.Lbl("Quick Play"), Ui.Title("Press Play on roblox.com, as always", 15),
-                Ui.Desc("Games you play through BrainStrap appear here for one-click launching, with your settings applied."),
-                Ui.Buttons(Ui.Pill("Open roblox.com", () => Ui.Open("https://www.roblox.com/discover"))));
+            return Ui.Card(Ui.Head("play", "Quick Play", "Games you play through BrainStrap appear here for one-click launching, with your settings applied."),
+                Ui.Buttons(Ui.Ghost("Find games on roblox.com", () => Ui.Open("https://www.roblox.com/discover"))));
         return Ui.Card(Ui.Lbl("Quick Play"), lib);
     }
 
@@ -112,9 +141,7 @@ internal static class HomePage
     }
 
     static UIElement Boost(MainWindow host) => Ui.Card(
-        Ui.Lbl("BrainBoost"),
-        Ui.Title("One click: the best setup for this PC", 16),
-        Ui.Desc("BrainAI reads your hardware and builds a tested, safe performance setup. You see every change before it's applied."),
+        Ui.Head("bolt", "BrainBoost: the best setup for this PC, in one click", "BrainAI reads your hardware and builds a tested, safe performance setup. You see every change before it's applied."),
         Ui.Buttons(
             Ui.Pill("Run BrainBoost", () => { BrainAiPage.PendingRequest = "smoother while keeping the graphics looking good"; host.Go("brainai"); }),
             Ui.Ghost("Ask BrainAI something", () => host.Go("brainai"))));

@@ -40,7 +40,7 @@ internal static class Ui
         return t;
     }
 
-    public static TextBlock Big(string text, string brush = "Ink") => Text(text, 30, brush, FontWeights.Bold);
+    public static TextBlock Big(string text, string brush = "Ink") => Text(text, 30, brush, FontWeights.ExtraBold);
 
     public static Border Card(params UIElement[] children)
     {
@@ -285,10 +285,130 @@ internal static class Ui
 
     public static ScrollViewer Page(string title, string sub, out StackPanel body)
     {
-        body = new StackPanel { Margin = new Thickness(44, 40, 44, 44), MaxWidth = 860, HorizontalAlignment = HorizontalAlignment.Left };
-        body.Children.Add(H1(title));
-        body.Children.Add(Minimal ? new Border { Height = 18 } : Sub(sub));
+        body = new StackPanel { Margin = new Thickness(44, 14, 44, 44), MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
+        if (title.Length > 0)
+        {
+            body.Children.Add(H1(title));
+            body.Children.Add(Minimal ? new Border { Height = 18 } : Sub(sub));
+        }
         return new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = body };
+    }
+
+    /// <summary>The big panel at the top of a page: a small label, a large headline, a line of text and the main actions.</summary>
+    public static Border Hero(string eyebrow, string title, string sub, params UIElement[] actions)
+    {
+        var sp = new StackPanel { Margin = new Thickness(0, 0, 210, 0) };
+        var eye = Lbl(eyebrow);
+        eye.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+        sp.Children.Add(eye);
+        var h = new TextBlock { Text = title, FontSize = 44, FontWeight = FontWeights.ExtraBold, TextWrapping = TextWrapping.Wrap, LineHeight = 50, Margin = new Thickness(0, 4, 0, 10) };
+        sp.Children.Add(h);
+        if (!Minimal && sub.Length > 0)
+        {
+            var t = Text(sub, 15, "Muted");
+            t.LineHeight = 23;
+            t.MaxWidth = 520;
+            t.HorizontalAlignment = HorizontalAlignment.Left;
+            sp.Children.Add(t);
+        }
+        if (actions.Length > 0)
+        {
+            var w = Buttons(actions);
+            w.Margin = new Thickness(0, 22, 0, 0);
+            sp.Children.Add(w);
+        }
+        // the mark, large and faint, sits behind the right-hand side
+        var mark = new Image
+        {
+            Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/brainstrap-mark.png")),
+            Width = 250, Height = 250, Opacity = 0.11, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, -60, -50, -60),
+            IsHitTestVisible = false, RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new RotateTransform(-10),
+        };
+        RenderOptions.SetBitmapScalingMode(mark, BitmapScalingMode.HighQuality);
+        var grid = new Grid { ClipToBounds = true };
+        grid.Children.Add(mark);
+        grid.Children.Add(sp);
+        var card = new Border { CornerRadius = new CornerRadius(26), Padding = new Thickness(34, 32, 34, 32), Margin = new Thickness(0, 4, 0, 16), BorderThickness = new Thickness(1), Child = grid, ClipToBounds = true };
+        card.SetResourceReference(Border.BackgroundProperty, "HeroBrush");
+        card.SetResourceReference(Border.BorderBrushProperty, "CardLineHover");
+        return card;
+    }
+
+    /// <summary>A pill button with an icon in front of the text.</summary>
+    public static Button IconPill(string icon, string text, Action click, bool ghost = false, double height = 44)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        var ic = Icons.Make(icon, 16, 2.1);
+        ic.Margin = new Thickness(0, 0, 9, 0);
+        row.Children.Add(ic);
+        row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
+        var b = new Button { Content = row, Style = Sty(ghost ? "GhostButton" : "PillButton"), Margin = new Thickness(0, 0, 10, 8), Height = height, FontSize = 14, Padding = new Thickness(22, 0, 24, 0) };
+        b.Click += (_, _) => Guard(click);
+        return b;
+    }
+
+    /// <summary>A glass tile: an icon, a big value and a caption. Clickable when given an action.</summary>
+    public static FrameworkElement StatTile(string icon, string value, string caption, string brush = "Ink", Action? click = null)
+    {
+        var sp = new StackPanel();
+        var badge = Icons.Badge(icon, 36, brush == "Ink" ? "Muted" : brush);
+        badge.HorizontalAlignment = HorizontalAlignment.Left;
+        badge.Margin = new Thickness(0, 0, 0, 14);
+        sp.Children.Add(badge);
+        var v = Text(value, 21, brush, FontWeights.ExtraBold);
+        v.TextWrapping = TextWrapping.NoWrap;
+        v.TextTrimming = TextTrimming.CharacterEllipsis;
+        sp.Children.Add(v);
+        sp.Children.Add(Small(caption, 2));
+        if (click != null)
+        {
+            var b = new Button { Content = sp, Style = Sty("TileButton"), Padding = new Thickness(18) };
+            b.Click += (_, _) => Guard(click);
+            return b;
+        }
+        return new Border { Style = Sty("Tile"), Padding = new Thickness(18), Child = sp };
+    }
+
+    /// <summary>Equal-width tiles in a row with gaps between them.</summary>
+    public static Grid TileRow(params FrameworkElement[] tiles)
+    {
+        var g = new Grid { Margin = new Thickness(0, 0, 0, 16) };
+        for (var i = 0; i < tiles.Length; i++)
+        {
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            tiles[i].Margin = new Thickness(i == 0 ? 0 : 6, 0, i == tiles.Length - 1 ? 0 : 6, 0);
+            Grid.SetColumn(tiles[i], i);
+            g.Children.Add(tiles[i]);
+        }
+        return g;
+    }
+
+    /// <summary>A small rounded label, e.g. "NEW" or "MANAGED BY BRAINSTRAP".</summary>
+    public static Border Tag(string text, string brush = "Muted")
+    {
+        var t = Text(text.ToUpperInvariant(), 9.5, brush, FontWeights.Bold, true);
+        var b = new Border { CornerRadius = new CornerRadius(7), Padding = new Thickness(8, 3, 8, 3), Child = t, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, BorderThickness = new Thickness(1) };
+        b.SetResourceReference(Border.BackgroundProperty, "Pill");
+        b.SetResourceReference(Border.BorderBrushProperty, "Line");
+        return b;
+    }
+
+    /// <summary>A card heading with an icon badge, a title and a line of description.</summary>
+    public static Grid Head(string icon, string title, string desc = "")
+    {
+        var g = new Grid { Margin = new Thickness(0, 0, 0, 16) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var badge = Icons.Badge(icon, 40);
+        badge.Margin = new Thickness(0, 0, 14, 0);
+        badge.VerticalAlignment = VerticalAlignment.Top;
+        var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        sp.Children.Add(Title(title, 16.5));
+        if (desc.Length > 0) sp.Children.Add(Desc(desc));
+        Grid.SetColumn(sp, 1);
+        g.Children.Add(badge);
+        g.Children.Add(sp);
+        return g;
     }
 
     public static void Msg(TextBlock t, string text, string brush = "Muted")

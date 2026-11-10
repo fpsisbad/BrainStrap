@@ -38,6 +38,8 @@
     <EmbeddedResource Include="builder.json" LogicalName="builder.json" />
     <Resource Include="Assets\brainstrap.ico" />
     <Resource Include="Assets\brainstrap-mark.png" />
+    <!-- Manrope and JetBrains Mono, SIL Open Font License (the licence texts sit next to the fonts) -->
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
 </Project>

@@ -21,7 +21,7 @@ internal static class LifePage
         var op = new Slider { Minimum = 0.3, Maximum = 1, Value = s.Hud.Opacity, Width = 220 };
         op.LostMouseCapture += (_, _) => { s.Hud.Opacity = op.Value; AppState.Save("HUD opacity"); };
         body.Children.Add(Ui.Card(
-            Ui.Lbl("BrainHUD"),
+            Ui.Head("pulse", "BrainHUD"),
             Ui.ToggleRow("Show the HUD while playing", "A small, click-through overlay with FPS, ping, CPU/GPU, temperatures and session time. It's a separate window on top of the game, not something inside Roblox. Ctrl+Shift+H hides it.",
                 s.Hud.Enabled, on => { s.Hud.Enabled = on; AppState.Save("HUD " + (on ? "on" : "off")); }),
             Ui.Lbl("Corner"),
@@ -46,6 +46,33 @@ internal static class LifePage
                 for (var i = 0; i < 5; i++) { hud.Update(fake, DateTime.UtcNow - fake.Started); await Task.Delay(1000); }
                 hud.Close();
             }, ghost: true))));
+
+        // ── BrainSight: a crosshair overlay ──
+        var c = s.Crosshair;
+        var preview = new Border { Width = 150, Height = 150, CornerRadius = new CornerRadius(16), Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x3A, 0x33)), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 14) };
+        void Redraw() { preview.Child = CrosshairOverlay.Draw(c, 150); }
+        Redraw();
+        Slider S(double min, double max, double value, Action<double> set)
+        {
+            var sl = new Slider { Minimum = min, Maximum = max, Value = value, Width = 220, IsSnapToTickEnabled = true, TickFrequency = max <= 1 ? 0.05 : 1 };
+            sl.ValueChanged += (_, _) => { set(sl.Value); Redraw(); };
+            sl.LostMouseCapture += (_, _) => AppState.Save("Crosshair");
+            return sl;
+        }
+        body.Children.Add(Ui.Card(
+            Ui.Head("target", "BrainSight", "A crosshair in the middle of your screen while Roblox is in front. It is BrainStrap's own see-through window, like the crosshair some gaming monitors draw; nothing is added to the game."),
+            Ui.ToggleRow("Show a crosshair while playing", "", c.Enabled, on => { c.Enabled = on; AppState.Save("Crosshair " + (on ? "on" : "off")); }),
+            preview,
+            Ui.Lbl("Shape"),
+            Ui.Chips(new[] { ("Cross", "cross"), ("Dot", "dot"), ("Circle", "circle"), ("T", "tee") }, c.Shape, v => { c.Shape = v; AppState.Save("Crosshair shape"); Redraw(); }),
+            Ui.Lbl("Colour", 8),
+            Ui.Chips(new[] { ("White", "#FFFFFF"), ("Green", "#3DFF7A"), ("Cyan", "#40E8FF"), ("Yellow", "#FFE14D"), ("Red", "#FF4D5E"), ("Pink", "#FF6AD5") }, c.Color, v => { c.Color = v; AppState.Save("Crosshair colour"); Redraw(); }),
+            new Border { Height = 6 },
+            Ui.KV("Size", S(4, 60, c.Size, v => c.Size = (int)v), 110),
+            Ui.KV("Thickness", S(1, 8, c.Thickness, v => c.Thickness = (int)v), 110),
+            Ui.KV("Gap", S(0, 30, c.Gap, v => c.Gap = (int)v), 110),
+            Ui.KV("Opacity", S(0.2, 1, c.Opacity, v => c.Opacity = v), 110),
+            Ui.ToggleRow("Dark outline", "Keeps it visible on bright scenes.", c.Outline, on => { c.Outline = on; AppState.Save(); Redraw(); })));
 
         // ── Game Library + Playtime Journal ──
         var lib = new WrapPanel();
@@ -186,9 +213,7 @@ internal static class LifePage
         play.HorizontalAlignment = HorizontalAlignment.Left;
         info.Children.Add(play);
         var row = Ui.Row(iconFrame, info);
-        var card = new Border { Child = row, Padding = new Thickness(12), CornerRadius = new CornerRadius(14), Margin = new Thickness(0, 0, 10, 10), BorderThickness = new Thickness(1) };
-        card.SetResourceReference(Border.BackgroundProperty, "Panel2");
-        card.SetResourceReference(Border.BorderBrushProperty, "Line");
+        var card = new Border { Child = row, Style = (Style)Application.Current.FindResource("Tile"), Padding = new Thickness(12), Margin = new Thickness(0, 0, 10, 10) };
         _ = Task.Run(async () =>
         {
             var g = await RobloxApi.GameAsync(placeId);

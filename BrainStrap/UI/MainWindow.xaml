@@ -1,446 +1,399 @@
 <Window x:Class="BrainStrap.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BrainStrap" Width="1240" Height="860" MinWidth="980" MinHeight="660"
+        Title="BrainStrap" Width="1280" Height="860" MinWidth="1040" MinHeight="680"
         WindowStartupLocation="CenterScreen" UseLayoutRounding="True" SnapsToDevicePixels="True"
         Icon="pack://application:,,,/Assets/brainstrap.ico"
         Background="{DynamicResource Bg}" Foreground="{DynamicResource Ink}"
         FontFamily="{DynamicResource UiFont}" FontSize="14">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="236" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+    <!-- BrainStrap draws its own title bar: the top 52px drag the window, the buttons on the right are ours. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="52" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+    <Grid x:Name="Root">
+        <!-- the live silk and the glows, behind everything -->
+        <Grid x:Name="BgLayer" IsHitTestVisible="False" ClipToBounds="True" />
 
-        <!-- Studio → Custom Backgrounds draws here, behind everything -->
-        <Grid x:Name="BgLayer" Grid.ColumnSpan="2" IsHitTestVisible="False" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="252" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <!-- ───────── sidebar ───────── -->
-        <Border Grid.Column="0" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0">
-            <DockPanel Margin="18,22,18,18">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,26">
-                    <Image Source="pack://application:,,,/Assets/brainstrap-mark.png" Width="30" Height="30"
-                           RenderOptions.BitmapScalingMode="HighQuality" />
-                    <TextBlock Text="BrainStrap" FontSize="19" FontWeight="Bold" Margin="11,0,0,0" VerticalAlignment="Center" />
-                </StackPanel>
-                <TextBlock DockPanel.Dock="Bottom" Text="Ctrl+K  command palette" FontFamily="{StaticResource MonoFont}" FontSize="10.5" Foreground="{DynamicResource Dim}" Margin="8,10,0,0" />
-
-                <Border DockPanel.Dock="Bottom" Background="{DynamicResource Pill}" CornerRadius="12" Padding="14,10">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="SideDot" Width="8" Height="8" Fill="{DynamicResource Dim}" VerticalAlignment="Center" />
-                        <TextBlock x:Name="SideStatus" Text="Checking…" Margin="10,0,0,0" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Muted}" />
+            <!-- ───────── sidebar ───────── -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0">
+                <DockPanel Margin="14,16,14,14">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,2,0,18">
+                        <Image Source="pack://application:,,,/Assets/brainstrap-mark.png" Width="32" Height="32"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                        <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="BrainStrap" FontSize="18" FontWeight="ExtraBold" />
+                            <TextBlock x:Name="SideVersion" Text="by rblx.brain" FontFamily="{DynamicResource MonoFont}" FontSize="9.5" Foreground="{DynamicResource Dim}" Margin="0,1,0,0" />
+                        </StackPanel>
                     </StackPanel>
-                </Border>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel>
-                    <TextBlock Text="PLAY" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Dim}" Margin="14,2,0,6" />
-                    <RadioButton x:Name="NavHome" Style="{StaticResource Nav}" GroupName="nav" Tag="home" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="01" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Home" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavBrainai" Style="{StaticResource Nav}" GroupName="nav" Tag="brainai" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="02" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainAI" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavLaunch" Style="{StaticResource Nav}" GroupName="nav" Tag="launch" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="03" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Launch" />
-                        </StackPanel>
-                    </RadioButton>
-                    <TextBlock Text="PILLARS" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Dim}" Margin="14,11,0,5" />
-                    <RadioButton x:Name="NavExtensions" Style="{StaticResource Nav}" GroupName="nav" Tag="extensions" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="04" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainExtensions" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavMods" Style="{StaticResource Nav}" GroupName="nav" Tag="mods" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="05" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainMods" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavFlags" Style="{StaticResource Nav}" GroupName="nav" Tag="flags" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="06" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainFlags" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavConnect" Style="{StaticResource Nav}" GroupName="nav" Tag="connect" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="07" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainConnect" />
-                        </StackPanel>
-                    </RadioButton>
-                    <TextBlock Text="PLATFORM" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Dim}" Margin="14,11,0,5" />
-                    <RadioButton x:Name="NavStore" Style="{StaticResource Nav}" GroupName="nav" Tag="store" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="08" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainStore" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavFlow" Style="{StaticResource Nav}" GroupName="nav" Tag="flow" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="09" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainFlow" />
-                        </StackPanel>
-                    </RadioButton>
-                    <TextBlock Text="TUNE" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Dim}" Margin="14,11,0,5" />
-                    <RadioButton x:Name="NavPerformance" Style="{StaticResource Nav}" GroupName="nav" Tag="performance" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="10" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Performance" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" GroupName="nav" Tag="servers" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="11" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Servers" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavStudio" Style="{StaticResource Nav}" GroupName="nav" Tag="studio" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="12" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Studio" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavTools" Style="{StaticResource Nav}" GroupName="nav" Tag="tools" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="13" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Tools" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavLife" Style="{StaticResource Nav}" GroupName="nav" Tag="life" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="14" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="BrainLife" />
-                        </StackPanel>
-                    </RadioButton>
-                    <TextBlock Text="APP" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Dim}" Margin="14,11,0,5" />
-                    <RadioButton x:Name="NavPresence" Style="{StaticResource Nav}" GroupName="nav" Tag="presence" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="15" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="Presence" />
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton x:Name="NavAbout" Style="{StaticResource Nav}" GroupName="nav" Tag="about" Click="Nav_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="16" Width="30" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" />
-                            <TextBlock Text="About" />
-                        </StackPanel>
-                    </RadioButton>
-                </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
-
-        <!-- ───────── pages ───────── -->
-        <Grid Grid.Column="1">
-            <!-- the code-built pages (Home, BrainAI, Performance, Servers, Studio, Tools, BrainLife) -->
-            <ContentControl x:Name="DynHost" Visibility="Collapsed" Focusable="False" />
-
-            <!-- LAUNCH -->
-            <ScrollViewer x:Name="PageLaunch" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Margin="44,40,44,44" MaxWidth="780" HorizontalAlignment="Left">
-                    <TextBlock Text="Launch" Style="{StaticResource H1}" />
-                    <TextBlock Style="{StaticResource Sub}"
-                               Text="BrainStrap sits between roblox.com and the Roblox player. When you press Play it applies your graphics flags and mods, then starts Roblox." />
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="PLAY BUTTON" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
-                                <TextBlock x:Name="TxtHandler" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <!-- status card -->
+                    <Border DockPanel.Dock="Bottom" Background="{DynamicResource Pill}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="14" Padding="13,10" Margin="0,10,0,0">
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Left" Width="10" Height="10" Margin="2,0,11,0" VerticalAlignment="Center">
+                                <Ellipse x:Name="SideHalo" Fill="{DynamicResource Ok}" Opacity="0.35" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Ellipse x:Name="SideDot" Width="8" Height="8" Fill="{DynamicResource Dim}" />
                             </Grid>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="ROBLOX INSTALLED" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
-                                <TextBlock x:Name="TxtInstalled" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
-                            </Grid>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="ROBLOX LATEST" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
-                                <TextBlock x:Name="TxtLatest" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
-                            </Grid>
-                            <WrapPanel>
-                                <Button x:Name="BtnSetup" Style="{StaticResource PillButton}" Content="Set up BrainStrap" Click="BtnSetup_Click" />
-                                <Button x:Name="BtnRestore" Style="{StaticResource GhostButton}" Content="Restore Roblox launcher" Click="BtnRestore_Click" />
-                            </WrapPanel>
-                            <TextBlock x:Name="TxtSetupMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Close BrainStrap when Roblox starts" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="BrainStrap only stays open while the game runs if Discord presence is on." />
-                                </StackPanel>
-                                <CheckBox x:Name="TglClose" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="close" />
-                            </Grid>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Safe mode" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="Launch with no graphics flags and no mods. Use this to check whether a problem comes from your setup." />
-                                </StackPanel>
-                                <CheckBox x:Name="TglSafe" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="safe" />
-                            </Grid>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Check for Roblox updates before launching" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="Asks Roblox's public settings service which version is current. If yours is old, Roblox's own launcher updates it first." />
-                                </StackPanel>
-                                <CheckBox x:Name="TglUpdates" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="updates" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Take the Play button back after Roblox updates" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="Roblox's updater re-registers itself. When it finishes, BrainStrap registers itself again." />
-                                </StackPanel>
-                                <CheckBox x:Name="TglKeep" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="keep" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Housekeeping" FontWeight="SemiBold" Margin="0,0,0,4" />
-                            <TextBlock Style="{StaticResource Small}" Margin="0,0,0,14"
-                                       Text="Roblox keeps old copies of itself after updates. Remove all but the newest to free disk space." />
-                            <WrapPanel>
-                                <Button Style="{StaticResource GhostButton}" Content="Remove old Roblox versions" Click="BtnPrune_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Get Roblox (roblox.com)" Click="BtnGetRoblox_Click" />
-                            </WrapPanel>
-                            <TextBlock x:Name="TxtPruneMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- GRAPHICS -->
-            <ScrollViewer x:Name="PageGraphics" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Margin="44,40,44,44" MaxWidth="780" HorizontalAlignment="Left">
-                    <TextBlock Text="Graphics" Style="{StaticResource H1}" />
-                    <TextBlock Style="{StaticResource Sub}"
-                               Text="Pick how Roblox renders. Choices are saved in profiles and written to Roblox's FastFlag file on every launch, so they survive updates." />
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="PROFILE" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
-                            <WrapPanel x:Name="ProfileChips" />
-                            <WrapPanel Margin="0,6,0,0">
-                                <Button Style="{StaticResource GhostButton}" Content="New profile" Click="BtnNewProfile_Click" />
-                                <Button x:Name="BtnDelProfile" Style="{StaticResource GhostButton}" Content="Delete profile" Click="BtnDelProfile_Click" />
-                            </WrapPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="PRESETS" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
-                            <WrapPanel x:Name="PresetButtons" />
-                            <TextBlock x:Name="TxtPresetDesc" Style="{StaticResource Small}" Margin="0,8,0,0" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel x:Name="FlagList" />
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Custom flags (advanced)" FontWeight="SemiBold" />
-                            <TextBlock Style="{StaticResource Small}" Margin="0,2,0,12"
-                                       Text="One per line, like  DFIntTaskSchedulerTargetFps=144 . Only real flag names are accepted, and Roblox ignores any flag that is not on its allowlist." />
-                            <TextBox x:Name="TxtCustom" Style="{StaticResource Field}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" MaxHeight="220"
-                                     FontFamily="{StaticResource MonoFont}" FontSize="12.5" VerticalScrollBarVisibility="Auto" />
-                            <WrapPanel Margin="0,12,0,0">
-                                <Button Style="{StaticResource PillButton}" Content="Save custom flags" Click="BtnSaveCustom_Click" />
-                            </WrapPanel>
-                            <TextBlock x:Name="TxtCustomMsg" Style="{StaticResource Small}" Margin="0,10,0,0" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Per-game profiles" FontWeight="SemiBold" />
-                            <TextBlock Style="{StaticResource Small}" Margin="0,2,0,12"
-                                       Text="Use the selected profile automatically for one game. The place ID is the number in the game's URL on roblox.com." />
-                            <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="TxtPlaceId" Style="{StaticResource Field}" Width="200" Margin="0,0,10,0" />
-                                <Button Style="{StaticResource GhostButton}" Content="Use selected profile for this game" Click="BtnAssign_Click" />
+                            <StackPanel>
+                                <TextBlock x:Name="SideStatus" Text="Checking…" FontSize="12.5" FontWeight="Bold" />
+                                <TextBlock x:Name="SideSub" Text="" FontSize="11" Foreground="{DynamicResource Dim}" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                            <StackPanel x:Name="GameRows" Margin="0,12,0,0" />
-                        </StackPanel>
+                        </DockPanel>
                     </Border>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Share and back up" FontWeight="SemiBold" Margin="0,0,0,12" />
-                            <WrapPanel>
-                                <Button Style="{StaticResource GhostButton}" Content="Export profile" Click="BtnExportProfile_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Import profile" Click="BtnImportProfile_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Export ClientAppSettings.json" Click="BtnExportJson_Click" />
-                            </WrapPanel>
-                            <CheckBox x:Name="TglStringFormat" Style="{StaticResource Toggle}" Margin="0,16,0,0" Click="Toggle_Click" Tag="stringformat"
-                                      Content="Write values as text (&quot;True&quot;, &quot;144&quot;) — try this if flags seem ignored" />
-                            <TextBlock x:Name="TxtCatalogNote" Style="{StaticResource Small}" Margin="0,16,0,0" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="NavList" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
 
-            <!-- MODS -->
-            <ScrollViewer x:Name="PageMods" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Margin="44,40,44,44" MaxWidth="780" HorizontalAlignment="Left">
-                    <TextBlock Text="Mods" Style="{StaticResource H1}" />
-                    <TextBlock Style="{StaticResource Sub}"
-                               Text="Drop your own files into the Mods folder (sounds, cursors, sky textures, fonts). BrainStrap copies them into Roblox on every launch and puts the originals back when you remove them." />
+            <!-- ───────── top bar + pages ───────── -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="52" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Apply mods when launching" FontWeight="SemiBold" />
-                                    <TextBlock x:Name="TxtModsPath" Style="{StaticResource Small}" FontFamily="{StaticResource MonoFont}" />
+                <DockPanel Grid.Row="0" Margin="44,0,8,0" LastChildFill="False">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button Style="{StaticResource GhostButton}" Height="32" Padding="12,0,8,0" Margin="0,0,10,0" Click="Search_Click" ToolTip="Jump to any page or run a command">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Search or run a command" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" />
+                                <Border Background="{DynamicResource Pill}" CornerRadius="6" Padding="6,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Ctrl K" FontFamily="{DynamicResource MonoFont}" FontSize="10" Foreground="{DynamicResource Muted}" />
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource CapButton}" Click="Min_Click" ToolTip="Minimise">
+                            <Path Data="M0,0.5 H10" Width="10" Height="1" Stretch="None" StrokeThickness="1.2"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </Button>
+                        <Button Style="{StaticResource CapButton}" Click="Max_Click" ToolTip="Maximise">
+                            <Path Data="M0.5,0.5 H9.5 V9.5 H0.5 Z" Width="10" Height="10" Stretch="None" StrokeThickness="1.2"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </Button>
+                        <Button Style="{StaticResource CapClose}" Click="Close_Click" ToolTip="Close">
+                            <Path Data="M0.5,0.5 L9.5,9.5 M9.5,0.5 L0.5,9.5" Width="10" Height="10" Stretch="None" StrokeThickness="1.2"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </Button>
+                    </StackPanel>
+                    <TextBlock x:Name="Crumb" DockPanel.Dock="Left" VerticalAlignment="Center" Text="BRAINSTRAP" FontFamily="{DynamicResource MonoFont}" FontSize="10.5" Foreground="{DynamicResource Dim}" />
+                </DockPanel>
+
+                <Grid Grid.Row="1" x:Name="PageHost">
+                    <Grid.RenderTransform>
+                        <TranslateTransform />
+                    </Grid.RenderTransform>
+                    <!-- the code-built pages -->
+                    <ContentControl x:Name="DynHost" Visibility="Collapsed" Focusable="False" />
+
+                    <!-- LAUNCH -->
+                    <ScrollViewer x:Name="PageLaunch" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="44,18,44,44" MaxWidth="860" HorizontalAlignment="Left">
+                            <TextBlock Text="Launch" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Sub}"
+                                       Text="BrainStrap sits between roblox.com and the Roblox player. When you press Play it applies your graphics flags and mods, then starts Roblox." />
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="PLAY BUTTON" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="TxtHandler" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Grid>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="ROBLOX INSTALLED" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="TxtInstalled" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Grid>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="ROBLOX LATEST" Style="{StaticResource Lbl}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="TxtLatest" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    </Grid>
+                                    <WrapPanel>
+                                        <Button x:Name="BtnSetup" Style="{StaticResource PillButton}" Content="Set up BrainStrap" Click="BtnSetup_Click" />
+                                        <Button x:Name="BtnRestore" Style="{StaticResource GhostButton}" Content="Restore Roblox launcher" Click="BtnRestore_Click" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="TxtSetupMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
                                 </StackPanel>
-                                <CheckBox x:Name="TglMods" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="mods" />
-                            </Grid>
-                            <WrapPanel>
-                                <Button Style="{StaticResource PillButton}" Content="Open Mods folder" Click="BtnOpenMods_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Apply now" Click="BtnApplyMods_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Revert everything" Click="BtnRevertMods_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Refresh list" Click="BtnRefreshMods_Click" />
-                            </WrapPanel>
-                            <TextBlock x:Name="TxtModsMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
-                        </StackPanel>
-                    </Border>
+                            </Border>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="How to lay out files" FontWeight="SemiBold" Margin="0,0,0,6" />
-                            <TextBlock Style="{StaticResource Small}" FontFamily="{StaticResource MonoFont}"
-                                       Text="Mods\content\sounds\ouch.ogg&#10;Mods\content\textures\Cursor\KeyboardMouse\ArrowCursor.png&#10;Mods\PlatformContent\pc\fonts\..." />
-                            <TextBlock Style="{StaticResource Small}" Margin="0,10,0,0"
-                                       Text="Only the content, PlatformContent and ExtraContent folders are used. Program and script files (.exe .dll .bat .ps1 and similar) are never copied." />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="FILES FOUND" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
-                            <StackPanel x:Name="ModRows" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- PRESENCE -->
-            <ScrollViewer x:Name="PagePresence" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Margin="44,40,44,44" MaxWidth="780" HorizontalAlignment="Left">
-                    <TextBlock Text="Presence" Style="{StaticResource H1}" />
-                    <TextBlock Style="{StaticResource Sub}"
-                               Text="Show the game you are playing on your Discord profile. It is off by default and talks only to the Discord app on your own PC." />
-
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Discord Rich Presence" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="BrainStrap stays open while Roblox runs so it can clear the status when you quit." />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Close BrainStrap when Roblox starts" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="BrainStrap only stays open while the game runs if Discord presence is on." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglClose" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="close" />
+                                    </Grid>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Safe mode" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="Launch with no graphics flags and no mods. Use this to check whether a problem comes from your setup." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglSafe" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="safe" />
+                                    </Grid>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Check for Roblox updates before launching" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="Asks Roblox's public settings service which version is current. If yours is old, Roblox's own launcher updates it first." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglUpdates" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="updates" />
+                                    </Grid>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Take the Play button back after Roblox updates" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="Roblox's updater re-registers itself. When it finishes, BrainStrap registers itself again." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglKeep" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="keep" />
+                                    </Grid>
                                 </StackPanel>
-                                <CheckBox x:Name="TglDiscord" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="discord" />
-                            </Grid>
-                            <Grid Margin="0,0,0,18">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,24,0">
-                                    <TextBlock Text="Show the game's name" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource Small}" Text="Looks the name up from the place ID using Roblox's public API. Off shows just &quot;Playing Roblox&quot;." />
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Housekeeping" FontWeight="SemiBold" Margin="0,0,0,4" />
+                                    <TextBlock Style="{StaticResource Small}" Margin="0,0,0,14"
+                                               Text="Roblox keeps old copies of itself after updates. Remove all but the newest to free disk space." />
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource GhostButton}" Content="Remove old Roblox versions" Click="BtnPrune_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Get Roblox (roblox.com)" Click="BtnGetRoblox_Click" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="TxtPruneMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
                                 </StackPanel>
-                                <CheckBox x:Name="TglGameName" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="gamename" />
-                            </Grid>
-                            <TextBlock Text="DISCORD APPLICATION ID" Style="{StaticResource Lbl}" Margin="0,0,0,8" />
-                            <TextBox x:Name="TxtClientId" Style="{StaticResource Field}" FontFamily="{StaticResource MonoFont}" LostFocus="Presence_LostFocus" />
-                            <TextBlock Text="LARGE IMAGE KEY (OPTIONAL)" Style="{StaticResource Lbl}" Margin="0,16,0,8" />
-                            <TextBox x:Name="TxtImageKey" Style="{StaticResource Field}" FontFamily="{StaticResource MonoFont}" LostFocus="Presence_LostFocus" />
+                            </Border>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Setting it up" FontWeight="SemiBold" Margin="0,0,0,6" />
-                            <TextBlock Style="{StaticResource Small}"
-                                       Text="1. Open discord.com/developers/applications and create an application. Its name is what friends will see (for example BrainStrap).&#10;2. Copy its Application ID into the box above.&#10;3. Optional: upload a picture under Rich Presence → Art Assets and put that picture's key in the image box.&#10;4. Turn the switch on and start Roblox from the website." />
-                            <Button Style="{StaticResource GhostButton}" Content="Open Discord developer portal" Margin="0,14,0,0" HorizontalAlignment="Left" Click="BtnDiscordPortal_Click" />
+                    <!-- GRAPHICS -->
+                    <ScrollViewer x:Name="PageGraphics" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="44,18,44,44" MaxWidth="860" HorizontalAlignment="Left">
+                            <TextBlock Text="Graphics" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Sub}"
+                                       Text="Pick how Roblox renders. Choices are saved in profiles and written to Roblox's FastFlag file on every launch, so they survive updates." />
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="PROFILE" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
+                                    <WrapPanel x:Name="ProfileChips" />
+                                    <WrapPanel Margin="0,6,0,0">
+                                        <Button Style="{StaticResource GhostButton}" Content="New profile" Click="BtnNewProfile_Click" />
+                                        <Button x:Name="BtnDelProfile" Style="{StaticResource GhostButton}" Content="Delete profile" Click="BtnDelProfile_Click" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="PRESETS" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
+                                    <WrapPanel x:Name="PresetButtons" />
+                                    <TextBlock x:Name="TxtPresetDesc" Style="{StaticResource Small}" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel x:Name="FlagList" />
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Custom flags (advanced)" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource Small}" Margin="0,2,0,12"
+                                               Text="One per line, like  DFIntTaskSchedulerTargetFps=144 . Only real flag names are accepted, and Roblox ignores any flag that is not on its allowlist." />
+                                    <TextBox x:Name="TxtCustom" Style="{StaticResource Field}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" MaxHeight="220"
+                                             FontFamily="{StaticResource MonoFont}" FontSize="12.5" VerticalScrollBarVisibility="Auto" />
+                                    <WrapPanel Margin="0,12,0,0">
+                                        <Button Style="{StaticResource PillButton}" Content="Save custom flags" Click="BtnSaveCustom_Click" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="TxtCustomMsg" Style="{StaticResource Small}" Margin="0,10,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Per-game profiles" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource Small}" Margin="0,2,0,12"
+                                               Text="Use the selected profile automatically for one game. The place ID is the number in the game's URL on roblox.com." />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox x:Name="TxtPlaceId" Style="{StaticResource Field}" Width="200" Margin="0,0,10,0" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Use selected profile for this game" Click="BtnAssign_Click" />
+                                    </StackPanel>
+                                    <StackPanel x:Name="GameRows" Margin="0,12,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Share and back up" FontWeight="SemiBold" Margin="0,0,0,12" />
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource GhostButton}" Content="Export profile" Click="BtnExportProfile_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Import profile" Click="BtnImportProfile_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Export ClientAppSettings.json" Click="BtnExportJson_Click" />
+                                    </WrapPanel>
+                                    <CheckBox x:Name="TglStringFormat" Style="{StaticResource Toggle}" Margin="0,16,0,0" Click="Toggle_Click" Tag="stringformat"
+                                              Content="Write values as text (&quot;True&quot;, &quot;144&quot;) — try this if flags seem ignored" />
+                                    <TextBlock x:Name="TxtCatalogNote" Style="{StaticResource Small}" Margin="0,16,0,0" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
+                    </ScrollViewer>
 
-            <!-- ABOUT -->
-            <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Margin="44,40,44,44" MaxWidth="780" HorizontalAlignment="Left">
-                    <TextBlock Text="About" Style="{StaticResource H1}" />
-                    <TextBlock x:Name="TxtVersion" Style="{StaticResource Sub}" />
+                    <!-- MODS -->
+                    <ScrollViewer x:Name="PageMods" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="44,18,44,44" MaxWidth="860" HorizontalAlignment="Left">
+                            <TextBlock Text="Mods" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Sub}"
+                                       Text="Drop your own files into the Mods folder (sounds, cursors, sky textures, fonts). BrainStrap copies them into Roblox on every launch and puts the originals back when you remove them." />
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="What BrainStrap touches" FontWeight="SemiBold" Margin="0,0,0,8" />
-                            <TextBlock Style="{StaticResource Small}"
-                                       Text="• The roblox-player link registration for your Windows user (HKCU), so the Play button opens BrainStrap.&#10;• ClientSettings\ClientAppSettings.json inside the Roblox version folder (your graphics flags).&#10;• Files you put in the Mods folder, copied into Roblox's content folders.&#10;• %LOCALAPPDATA%\BrainStrap for settings, backups and logs." />
-                            <TextBlock Text="What BrainStrap never does" FontWeight="SemiBold" Margin="0,16,0,8" />
-                            <TextBlock Style="{StaticResource Small}"
-                                       Text="• No injection, hooks or memory access in the Roblox process.&#10;• No reading, storing or logging of your .ROBLOSECURITY cookie or login ticket.&#10;• No opening extra Roblox windows (no multi-instance).&#10;• No gameplay-changing flags.&#10;• No analytics or telemetry." />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Apply mods when launching" FontWeight="SemiBold" />
+                                            <TextBlock x:Name="TxtModsPath" Style="{StaticResource Small}" FontFamily="{StaticResource MonoFont}" />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglMods" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="mods" />
+                                    </Grid>
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource PillButton}" Content="Open Mods folder" Click="BtnOpenMods_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Apply now" Click="BtnApplyMods_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Revert everything" Click="BtnRevertMods_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Refresh list" Click="BtnRefreshMods_Click" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="TxtModsMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="How to lay out files" FontWeight="SemiBold" Margin="0,0,0,6" />
+                                    <TextBlock Style="{StaticResource Small}" FontFamily="{StaticResource MonoFont}"
+                                               Text="Mods\content\sounds\ouch.ogg&#10;Mods\content\textures\Cursor\KeyboardMouse\ArrowCursor.png&#10;Mods\PlatformContent\pc\fonts\..." />
+                                    <TextBlock Style="{StaticResource Small}" Margin="0,10,0,0"
+                                               Text="Only the content, PlatformContent and ExtraContent folders are used. Program and script files (.exe .dll .bat .ps1 and similar) are never copied." />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="FILES FOUND" Style="{StaticResource Lbl}" Margin="0,0,0,10" />
+                                    <StackPanel x:Name="ModRows" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <WrapPanel>
-                                <Button Style="{StaticResource PillButton}" Content="Copy diagnostics" Click="BtnDiag_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Open data folder" Click="BtnOpenData_Click" />
-                                <Button Style="{StaticResource GhostButton}" Content="Open logs" Click="BtnOpenLogs_Click" />
-                            </WrapPanel>
-                            <TextBlock x:Name="TxtAboutMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
+                    <!-- PRESENCE -->
+                    <ScrollViewer x:Name="PagePresence" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="44,18,44,44" MaxWidth="860" HorizontalAlignment="Left">
+                            <TextBlock Text="Presence" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Sub}"
+                                       Text="Show the game you are playing on your Discord profile. It is off by default and talks only to the Discord app on your own PC." />
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Discord Rich Presence" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="BrainStrap stays open while Roblox runs so it can clear the status when you quit." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglDiscord" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="discord" />
+                                    </Grid>
+                                    <Grid Margin="0,0,0,18">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,24,0">
+                                            <TextBlock Text="Show the game's name" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Small}" Text="Looks the name up from the place ID using Roblox's public API. Off shows just &quot;Playing Roblox&quot;." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="TglGameName" Grid.Column="1" Style="{StaticResource Toggle}" Click="Toggle_Click" Tag="gamename" />
+                                    </Grid>
+                                    <TextBlock Text="DISCORD APPLICATION ID" Style="{StaticResource Lbl}" Margin="0,0,0,8" />
+                                    <TextBox x:Name="TxtClientId" Style="{StaticResource Field}" FontFamily="{StaticResource MonoFont}" LostFocus="Presence_LostFocus" />
+                                    <TextBlock Text="LARGE IMAGE KEY (OPTIONAL)" Style="{StaticResource Lbl}" Margin="0,16,0,8" />
+                                    <TextBox x:Name="TxtImageKey" Style="{StaticResource Field}" FontFamily="{StaticResource MonoFont}" LostFocus="Presence_LostFocus" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Setting it up" FontWeight="SemiBold" Margin="0,0,0,6" />
+                                    <TextBlock Style="{StaticResource Small}"
+                                               Text="1. Open discord.com/developers/applications and create an application. Its name is what friends will see (for example BrainStrap).&#10;2. Copy its Application ID into the box above.&#10;3. Optional: upload a picture under Rich Presence → Art Assets and put that picture's key in the image box.&#10;4. Turn the switch on and start Roblox from the website." />
+                                    <Button Style="{StaticResource GhostButton}" Content="Open Discord developer portal" Margin="0,14,0,0" HorizontalAlignment="Left" Click="BtnDiscordPortal_Click" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
 
-                    <Border Style="{StaticResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="Uninstall" FontWeight="SemiBold" />
-                            <TextBlock Style="{StaticResource Small}" Margin="0,2,0,14"
-                                       Text="Puts Roblox's own launcher back, restores any modded files and removes the graphics flags BrainStrap wrote. Your settings and Mods folder are left in place." />
-                            <Button Style="{StaticResource GhostButton}" Content="Uninstall BrainStrap" HorizontalAlignment="Left" Click="BtnUninstall_Click" />
+                    <!-- ABOUT -->
+                    <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="44,18,44,44" MaxWidth="860" HorizontalAlignment="Left">
+                            <TextBlock Text="About" Style="{StaticResource H1}" />
+                            <TextBlock x:Name="TxtVersion" Style="{StaticResource Sub}" />
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="What BrainStrap touches" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                    <TextBlock Style="{StaticResource Small}"
+                                               Text="• The roblox-player link registration for your Windows user (HKCU), so the Play button opens BrainStrap.&#10;• ClientSettings\ClientAppSettings.json inside the Roblox version folder (your graphics flags).&#10;• Files you put in the Mods folder, copied into Roblox's content folders.&#10;• %LOCALAPPDATA%\BrainStrap for settings, backups and logs." />
+                                    <TextBlock Text="What BrainStrap never does" FontWeight="SemiBold" Margin="0,16,0,8" />
+                                    <TextBlock Style="{StaticResource Small}"
+                                               Text="• No injection, hooks or memory access in the Roblox process.&#10;• No reading, storing or logging of your .ROBLOSECURITY cookie or login ticket.&#10;• No opening extra Roblox windows (no multi-instance).&#10;• No gameplay-changing flags.&#10;• No analytics or telemetry." />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource PillButton}" Content="Copy diagnostics" Click="BtnDiag_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Open data folder" Click="BtnOpenData_Click" />
+                                        <Button Style="{StaticResource GhostButton}" Content="Open logs" Click="BtnOpenLogs_Click" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="TxtAboutMsg" Style="{StaticResource Small}" Margin="0,12,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Uninstall" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource Small}" Margin="0,2,0,14"
+                                               Text="Puts Roblox's own launcher back, restores any modded files and removes the graphics flags BrainStrap wrote. Your settings and Mods folder are left in place." />
+                                    <Button Style="{StaticResource GhostButton}" Content="Uninstall BrainStrap" HorizontalAlignment="Left" Click="BtnUninstall_Click" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Style="{StaticResource Small}" Margin="2,4,0,0"
+                                       Text="BrainStrap is an independent project. It is not made, endorsed or sponsored by Roblox Corporation. Roblox is a trademark of Roblox Corporation." />
                         </StackPanel>
-                    </Border>
-
-                    <TextBlock Style="{StaticResource Small}" Margin="2,4,0,0"
-                               Text="BrainStrap is an independent project. It is not made, endorsed or sponsored by Roblox Corporation. Roblox is a trademark of Roblox Corporation." />
-                </StackPanel>
-            </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

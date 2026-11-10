@@ -1,0 +1,73 @@
+# Builds BrainStrap.exe on GitHub's Windows machines and attaches it to a Release.
+# The website's Download button points at:  https://github.com/<you>/<repo>/releases/latest/download/BrainStrap.exe
+#
+# How to use it:
+#   1. Push this folder to a GitHub repository (public, so the download link works for everyone).
+#   2. Actions tab → "Build BrainStrap" → Run workflow   (or push a tag like v2.0.0).
+#   3. When it goes green, the Release has BrainStrap.exe and BrainStrap.exe.sha256.
+name: Build BrainStrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 2.0.0)"
+        required: true
+        default: "2.0.0"
+  push:
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Work out the version
+        id: v
+        shell: pwsh
+        run: |
+          $v = "${{ github.event.inputs.version }}"
+          if (-not $v -and "${{ github.ref_type }}" -eq "tag") { $v = "${{ github.ref_name }}".TrimStart("v") }
+          if (-not $v) { $v = "0.0.0-ci" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Publish (single file, self-contained, win-x64)
+        run: >
+          dotnet publish BrainStrap/BrainStrap.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true
+          -p:Version=${{ steps.v.outputs.version }} -o out
+
+      - name: Fingerprint
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash out/BrainStrap.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  BrainStrap.exe" | Out-File -Encoding ascii out/BrainStrap.exe.sha256
+          "SHA-256: $h" >> $env:GITHUB_STEP_SUMMARY
+          "Size: {0:N1} MB" -f ((Get-Item out/BrainStrap.exe).Length / 1MB) >> $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BrainStrap
+          path: |
+            out/BrainStrap.exe
+            out/BrainStrap.exe.sha256
+
+      - name: Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          name: BrainStrap ${{ steps.v.outputs.version }}
+          make_latest: true
+          files: |
+            out/BrainStrap.exe
+            out/BrainStrap.exe.sha256

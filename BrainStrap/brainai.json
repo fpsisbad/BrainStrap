@@ -1,0 +1,695 @@
+{
+  "version": 1,
+  "note": "BrainAI's local rules. Shared by the Windows app and the website demo so both give the same answer. Estimates are rough ranges for typical hardware, not measurements.",
+  "groups": [
+    {
+      "id": "smooth",
+      "label": "smoother",
+      "w": {
+        "perf": 2
+      },
+      "p": [
+        "smooth",
+        "smoother",
+        "stutter",
+        "stuttering",
+        "choppy",
+        "fps",
+        "frame rate",
+        "framerate",
+        "faster",
+        "boost",
+        "performance",
+        "run better",
+        "runs bad",
+        "lag",
+        "laggy",
+        "fps drops",
+        "freeze",
+        "freezing",
+        "optimi*"
+      ]
+    },
+    {
+      "id": "pretty",
+      "label": "good-looking",
+      "w": {
+        "quality": 2
+      },
+      "p": [
+        "look good",
+        "looking good",
+        "looks good",
+        "keep the graphics",
+        "keep graphics",
+        "graphics good",
+        "pretty",
+        "beautiful",
+        "quality",
+        "sharp",
+        "crisp",
+        "nice looking",
+        "high detail",
+        "max settings",
+        "ultra",
+        "realistic"
+      ]
+    },
+    {
+      "id": "ugly-ok",
+      "label": "graphics don't matter",
+      "w": {
+        "quality": -3,
+        "perf": 2
+      },
+      "p": [
+        "don't care about graphics",
+        "dont care about graphics",
+        "do not care about graphics",
+        "ugly is fine",
+        "graphics don't matter",
+        "graphics dont matter",
+        "lowest graphics",
+        "lowest settings",
+        "minimum settings",
+        "max fps"
+      ]
+    },
+    {
+      "id": "laptop",
+      "label": "laptop",
+      "w": {
+        "battery": 1
+      },
+      "hw": {
+        "laptop": 1
+      },
+      "p": [
+        "laptop",
+        "notebook",
+        "on battery",
+        "unplugged",
+        "on the go",
+        "chromebook"
+      ]
+    },
+    {
+      "id": "cool",
+      "label": "cool and quiet",
+      "w": {
+        "battery": 2
+      },
+      "p": [
+        "hot",
+        "heat",
+        "overheat",
+        "overheating",
+        "fan",
+        "fans",
+        "loud",
+        "quiet",
+        "cooler",
+        "thermal",
+        "battery life",
+        "save battery",
+        "last longer"
+      ]
+    },
+    {
+      "id": "competitive",
+      "label": "competitive",
+      "w": {
+        "latency": 2,
+        "perf": 1
+      },
+      "p": [
+        "competitive",
+        "pvp",
+        "sweat",
+        "sweaty",
+        "tryhard",
+        "ranked",
+        "input lag",
+        "input delay",
+        "latency",
+        "responsive",
+        "aim",
+        "shooter",
+        "rivals",
+        "bedwars",
+        "arsenal",
+        "combat",
+        "fighting",
+        "esports"
+      ]
+    },
+    {
+      "id": "cinematic",
+      "label": "screenshots and video",
+      "w": {
+        "quality": 3
+      },
+      "p": [
+        "screenshot",
+        "screenshots",
+        "cinematic",
+        "video",
+        "showcase",
+        "thumbnail",
+        "edit",
+        "film",
+        "photo"
+      ]
+    },
+    {
+      "id": "weak",
+      "label": "older PC",
+      "w": {
+        "perf": 3
+      },
+      "hw": {
+        "tierMax": 0
+      },
+      "p": [
+        "old pc",
+        "old computer",
+        "old laptop",
+        "potato",
+        "weak",
+        "slow pc",
+        "slow computer",
+        "low end",
+        "low-end",
+        "integrated",
+        "intel hd",
+        "10 year",
+        "ancient",
+        "bad pc",
+        "bad computer"
+      ]
+    },
+    {
+      "id": "strong",
+      "label": "strong PC",
+      "hw": {
+        "tierMin": 3
+      },
+      "p": [
+        "gaming pc",
+        "rtx",
+        "high end",
+        "high-end",
+        "beast",
+        "4090",
+        "4080",
+        "5080",
+        "5090",
+        "3080",
+        "strong pc",
+        "good pc",
+        "powerful"
+      ]
+    },
+    {
+      "id": "stream",
+      "label": "streaming",
+      "w": {
+        "battery": 1,
+        "perf": 1
+      },
+      "p": [
+        "stream",
+        "streaming",
+        "obs",
+        "discord call",
+        "while recording",
+        "record gameplay"
+      ]
+    }
+  ],
+  "genres": [
+    {
+      "match": [
+        "shooter",
+        "fps",
+        "fighting",
+        "combat",
+        "battle",
+        "pvp",
+        "war",
+        "military",
+        "sports",
+        "racing"
+      ],
+      "text": "competitive smooth"
+    },
+    {
+      "match": [
+        "horror",
+        "story",
+        "exploration",
+        "showcase",
+        "adventure"
+      ],
+      "text": "looking good"
+    },
+    {
+      "match": [
+        "roleplay",
+        "town and city",
+        "life",
+        "social",
+        "hangout"
+      ],
+      "text": "looking good smooth"
+    },
+    {
+      "match": [
+        "obby",
+        "platformer",
+        "parkour"
+      ],
+      "text": "smooth responsive"
+    },
+    {
+      "match": [
+        "simulat",
+        "tycoon",
+        "incremental",
+        "idle",
+        "clicker"
+      ],
+      "text": "smooth cooler"
+    },
+    {
+      "match": [
+        "survival",
+        "rpg",
+        "open world",
+        "building"
+      ],
+      "text": "smooth looking good"
+    }
+  ],
+  "rules": [
+    {
+      "set": "fps",
+      "value": "60",
+      "if": {
+        "gte": {
+          "battery": 2
+        },
+        "lte": {
+          "latency": 0
+        }
+      },
+      "why": "Caps FPS at 60. Frames your screen never shows still make heat and noise, so this keeps a laptop cooler and quieter."
+    },
+    {
+      "set": "fps",
+      "value": "$high",
+      "if": {
+        "gte": {
+          "latency": 2
+        }
+      },
+      "why": "Lets Roblox render more frames than your screen shows. In fast games that cuts input delay, even on a $refresh Hz screen."
+    },
+    {
+      "set": "fps",
+      "value": "$refresh",
+      "if": {
+        "gte": {
+          "perf": 1,
+          "refresh": 61
+        }
+      },
+      "why": "Raise Roblox's 60 FPS limit to your monitor's $refresh Hz, so every refresh gets a new frame."
+    },
+    {
+      "set": "fps",
+      "value": "$refresh",
+      "if": {
+        "gte": {
+          "quality": 1,
+          "refresh": 61,
+          "tier": 2
+        }
+      },
+      "why": "Your PC has headroom, so FPS is unlocked to your monitor's $refresh Hz."
+    },
+    {
+      "set": "api",
+      "value": "d3d11",
+      "if": {
+        "lte": {
+          "tier": 0
+        }
+      },
+      "why": "Direct3D 11 is the most reliable renderer on older graphics chips."
+    },
+    {
+      "set": "msaa",
+      "value": "8",
+      "if": {
+        "gte": {
+          "quality": 3,
+          "tier": 3
+        },
+        "lte": {
+          "perf": 0
+        }
+      },
+      "why": "Maximum edge smoothing for screenshots and video. Your GPU can afford it."
+    },
+    {
+      "set": "msaa",
+      "value": "4",
+      "if": {
+        "gte": {
+          "quality": 2,
+          "tier": 2
+        },
+        "lte": {
+          "perf": 1
+        }
+      },
+      "why": "Smooths jagged edges. Your GPU has the headroom for 4x."
+    },
+    {
+      "set": "msaa",
+      "value": "2",
+      "if": {
+        "gte": {
+          "quality": 2,
+          "tier": 2
+        }
+      },
+      "why": "A light 2x keeps edges clean without a big FPS cost."
+    },
+    {
+      "set": "msaa",
+      "value": "1",
+      "if": {
+        "gte": {
+          "perf": 1
+        },
+        "lte": {
+          "tier": 1
+        }
+      },
+      "why": "Anti-aliasing is one of the most expensive effects on laptop and older GPUs. Turning it off is a big, easy FPS win and hard to notice on smaller screens."
+    },
+    {
+      "set": "msaa",
+      "value": "1",
+      "if": {
+        "gte": {
+          "perf": 2
+        },
+        "lte": {
+          "quality": 1
+        }
+      },
+      "why": "Anti-aliasing costs a lot of GPU time for slightly smoother edges. Off is the fastest choice."
+    },
+    {
+      "set": "texture",
+      "value": "1",
+      "if": {
+        "lte": {
+          "tier": 0
+        }
+      },
+      "why": "Lower texture resolution frees video memory on older graphics chips."
+    },
+    {
+      "set": "texture",
+      "value": "3",
+      "if": {
+        "gte": {
+          "quality": 2,
+          "tier": 2
+        }
+      },
+      "why": "Sharpest textures. Your GPU has enough video memory."
+    },
+    {
+      "set": "frm",
+      "value": "1",
+      "if": {
+        "lte": {
+          "tier": 0,
+          "quality": 1
+        }
+      },
+      "why": "Forces the lowest graphics level. On very old hardware this is the difference between playable and not."
+    },
+    {
+      "set": "frm",
+      "value": "21",
+      "if": {
+        "gte": {
+          "quality": 3,
+          "tier": 3
+        },
+        "lte": {
+          "perf": 1
+        }
+      },
+      "why": "Locks graphics at the maximum level for screenshots and video."
+    },
+    {
+      "set": "frm",
+      "value": "10",
+      "if": {
+        "gte": {
+          "perf": 1,
+          "quality": 2
+        }
+      },
+      "why": "Locks graphics at a middle level. Roblox's automatic quality keeps jumping up and down, which is a common cause of stutter, so a fixed level is smoother while still looking good."
+    },
+    {
+      "set": "frm",
+      "value": "8",
+      "if": {
+        "gte": {
+          "perf": 2
+        }
+      },
+      "why": "Locks graphics at a moderate level so Roblox stops switching quality on its own, a common cause of stutter and sudden FPS drops."
+    },
+    {
+      "set": "frm",
+      "value": "15",
+      "if": {
+        "gte": {
+          "quality": 2,
+          "tier": 2
+        }
+      },
+      "why": "Locks graphics high so Roblox doesn't lower them on its own."
+    },
+    {
+      "set": "frm",
+      "value": "5",
+      "if": {
+        "gte": {
+          "perf": 2
+        },
+        "lte": {
+          "quality": -1
+        }
+      },
+      "why": "Locks graphics low. Big FPS gain, and it stops quality from jumping around."
+    },
+    {
+      "set": "grass",
+      "value": "off",
+      "if": {
+        "gte": {
+          "perf": 2
+        },
+        "lte": {
+          "quality": 1
+        }
+      },
+      "why": "Removes terrain grass. On grassy maps that's a quick FPS win, and most games look the same without it."
+    },
+    {
+      "set": "grass",
+      "value": "off",
+      "if": {
+        "lte": {
+          "tier": 0
+        }
+      },
+      "why": "Removes terrain grass, which older GPUs struggle to draw."
+    },
+    {
+      "set": "grassmotion",
+      "value": "true",
+      "if": {
+        "gte": {
+          "perf": 1
+        }
+      },
+      "why": "Stops grass from swaying: slightly cheaper and calmer to look at."
+    },
+    {
+      "set": "grassmotion",
+      "value": "true",
+      "if": {
+        "gte": {
+          "battery": 2
+        }
+      },
+      "why": "Stops grass from swaying to save a little power."
+    },
+    {
+      "set": "lod",
+      "value": "perf",
+      "if": {
+        "gte": {
+          "perf": 2
+        },
+        "lte": {
+          "quality": 1
+        }
+      },
+      "why": "Swaps detailed models to simpler versions sooner, which helps on big detailed maps."
+    },
+    {
+      "set": "lod",
+      "value": "perf",
+      "if": {
+        "lte": {
+          "tier": 0
+        }
+      },
+      "why": "Swaps detailed models to simpler versions sooner, easing the load on older hardware."
+    },
+    {
+      "set": "pausevoxel",
+      "value": "true",
+      "if": {
+        "lte": {
+          "tier": 0
+        },
+        "gte": {
+          "perf": 3
+        }
+      },
+      "why": "Freezes lighting recalculation. A big help on very weak PCs; lighting just won't react to moving objects."
+    }
+  ],
+  "impact": {
+    "msaa": {
+      "1": [
+        5,
+        20
+      ],
+      "2": [
+        -8,
+        -2
+      ],
+      "4": [
+        -15,
+        -5
+      ],
+      "8": [
+        -25,
+        -10
+      ]
+    },
+    "texture": {
+      "0": [
+        0,
+        6
+      ],
+      "1": [
+        0,
+        5
+      ],
+      "2": [
+        0,
+        2
+      ],
+      "3": [
+        -5,
+        0
+      ]
+    },
+    "frm": {
+      "1": [
+        30,
+        80
+      ],
+      "5": [
+        15,
+        40
+      ],
+      "10": [
+        0,
+        20
+      ],
+      "15": [
+        -10,
+        5
+      ],
+      "21": [
+        -50,
+        -20
+      ],
+      "8": [
+        5,
+        25
+      ]
+    },
+    "api": {
+      "d3d11": [
+        -3,
+        5
+      ],
+      "vulkan": [
+        -5,
+        10
+      ],
+      "opengl": [
+        -20,
+        0
+      ]
+    },
+    "grass": {
+      "off": [
+        3,
+        12
+      ]
+    },
+    "grassmotion": {
+      "true": [
+        0,
+        2
+      ]
+    },
+    "lod": {
+      "perf": [
+        2,
+        10
+      ]
+    },
+    "pausevoxel": {
+      "true": [
+        5,
+        20
+      ]
+    },
+    "skygray": {
+      "true": [
+        0,
+        1
+      ]
+    }
+  }
+}

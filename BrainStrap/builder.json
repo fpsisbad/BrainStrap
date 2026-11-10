@@ -1,0 +1,39 @@
+{
+  "note": "BrainBuilder / BrainPilot grammar. Shared by the app (Core/Platform/Flow.cs) and the website demo (web/builder.js).",
+  "triggers": [
+    { "type": "launch", "label": "When Roblox launches", "p": ["when roblox launches", "when roblox starts", "when i launch roblox", "when i start roblox", "when i launch", "when i press play", "before roblox starts", "on launch", "every time i play"] },
+    { "type": "join", "label": "When I join a game", "p": ["when i join", "when i play", "whenever i play", "when i open"], "arg": "game" },
+    { "type": "exit", "label": "When Roblox closes", "p": ["when roblox closes", "when i stop playing", "when i quit", "after playing", "when the game closes", "when i close roblox"] },
+    { "type": "crash", "label": "When Roblox crashes", "p": ["when roblox crashes", "if roblox crashes", "when it crashes", "if it crashes", "on crash"] },
+    { "type": "battery", "label": "When on battery", "p": ["on battery", "when unplugged", "when my laptop is unplugged", "when i unplug"] },
+    { "type": "manual", "label": "When I run this macro", "p": ["macro", "shortcut", "when i press", "one click"] }
+  ],
+  "actions": [
+    { "type": "profile.switch", "label": "Load profile", "p": ["switch to", "use the", "use my", "load", "change to"], "arg": "profile", "perm": "profiles" },
+    { "type": "hud.on", "label": "Show BrainHUD", "p": ["turn on the hud", "turn on hud", "show the hud", "show hud", "show fps", "show my fps", "enable the hud"], "perm": "hud" },
+    { "type": "hud.off", "label": "Hide BrainHUD", "p": ["hide the hud", "turn off the hud", "turn off hud", "hide hud"], "perm": "hud" },
+    { "type": "tracking.start", "label": "Start performance tracking", "p": ["start tracking", "track performance", "start performance tracking", "record fps", "track my fps", "measure fps"], "perm": "tracking" },
+    { "type": "app.start", "label": "Open app", "p": ["open", "start", "launch", "run"], "arg": "app", "perm": "apps" },
+    { "type": "app.close", "label": "Close app", "p": ["close", "quit"], "arg": "app", "perm": "apps" },
+    { "type": "notify", "label": "Show a notification", "p": ["notify me", "send me a notification", "send a notification", "remind me", "alert me"], "perm": "notifications" },
+    { "type": "gamemode.on", "label": "Turn on Game Mode+", "p": ["game mode", "boost my pc", "high performance", "boost performance"], "perm": "system" },
+    { "type": "safemode.on", "label": "Turn on safe mode", "p": ["turn on safe mode", "use safe mode", "safe mode"], "perm": "settings" },
+    { "type": "theme.set", "label": "Use theme", "p": ["theme", "use the theme", "switch the theme to"], "arg": "theme", "perm": "appearance" },
+    { "type": "webhook", "label": "Send to my webhooks", "p": ["send a webhook", "post to discord", "post to my webhook", "tell my discord"], "perm": "network" },
+    { "type": "backup", "label": "Back up settings", "p": ["back up", "backup", "save a backup"], "perm": "files" }
+  ],
+  "apps": { "discord": "Discord", "obs": "OBS Studio", "spotify": "Spotify", "steam": "Steam" },
+  "permissions": {
+    "profiles": ["Switch graphics profiles", "low"],
+    "hud": ["Show or hide BrainHUD", "low"],
+    "tracking": ["Record FPS and ping on this PC", "low"],
+    "apps": ["Open or close Discord, OBS, Spotify or Steam", "medium"],
+    "notifications": ["Show notifications", "low"],
+    "system": ["Change the Windows power plan while playing", "medium"],
+    "settings": ["Change launcher settings", "medium"],
+    "appearance": ["Change the launcher's look", "low"],
+    "network": ["Send events to webhooks you added", "high"],
+    "files": ["Write backups to your BrainStrap folder", "low"],
+    "launch": ["Start Roblox games", "medium"]
+  }
+}

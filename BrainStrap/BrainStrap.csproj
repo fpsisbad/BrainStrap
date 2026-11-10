@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>BrainStrap</AssemblyName>
+    <RootNamespace>BrainStrap</RootNamespace>
+    <ApplicationIcon>Assets\brainstrap.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>2.0.0</Version>
+    <Product>BrainStrap</Product>
+    <Company>BrainStrap</Company>
+    <Description>A customizable launcher for the Roblox Windows player.</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WMI (PC Analyzer), Windows performance counters (monitors) and DPAPI (encrypted secrets) -->
+    <PackageReference Include="System.Management" Version="8.0.0" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the flag catalog is read at runtime from inside the exe -->
+    <EmbeddedResource Include="catalog.json" LogicalName="catalog.json" />
+    <EmbeddedResource Include="brainai.json" LogicalName="brainai.json" />
+    <EmbeddedResource Include="builder.json" LogicalName="builder.json" />
+    <Resource Include="Assets\brainstrap.ico" />
+    <Resource Include="Assets\brainstrap-mark.png" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "updated": "2026-11",
+  "note": "Since 29 September 2025 the Roblox Player only reads Fast Flags on Roblox's official allowlist; anything else is silently ignored. BrainStrap marks every setting with its allowlist status and, by default, only writes allowlisted flags. Roblox can change the list at any time.",
+  "allowlistSource": "https://devforum.roblox.com/t/allowlist-for-local-client-configuration-via-fast-flags/3966569",
+  "allowlist": [
+    "DFIntCSGLevelOfDetailSwitchingDistance", "DFIntCSGLevelOfDetailSwitchingDistanceL12", "DFIntCSGLevelOfDetailSwitchingDistanceL23", "DFIntCSGLevelOfDetailSwitchingDistanceL34",
+    "FFlagHandleAltEnterFullscreenManually", "DFFlagTextureQualityOverrideEnabled", "DFIntTextureQualityOverride", "FIntDebugForceMSAASamples",
+    "DFFlagDisableDPIScale", "FFlagDebugGraphicsPreferD3D11", "FFlagDebugSkyGray", "DFFlagDebugPauseVoxelizer", "DFIntDebugFRMQualityLevelOverride",
+    "FIntFRMMaxGrassDistance", "FIntFRMMinGrassDistance", "FFlagDebugGraphicsPreferVulkan", "FFlagDebugGraphicsPreferOpenGL", "FIntGrassMovementReducedMotionFactor"
+  ],
+  "flags": [
+    { "id": "api", "group": "Rendering", "name": "Graphics API", "type": "choice", "risk": "medium",
+      "desc": "Forces a renderer. Leave on Default unless something is broken.",
+      "doc": "Roblox normally picks the best renderer for your GPU. Forcing Direct3D 11 can fix crashes on old or unusual drivers; Vulkan can help some AMD cards; OpenGL is a last resort.",
+      "options": [
+        { "value": "d3d11", "label": "Direct3D 11", "set": { "FFlagDebugGraphicsPreferD3D11": true } },
+        { "value": "vulkan", "label": "Vulkan", "set": { "FFlagDebugGraphicsPreferVulkan": true } },
+        { "value": "opengl", "label": "OpenGL", "set": { "FFlagDebugGraphicsPreferOpenGL": true } }
+      ] },
+    { "id": "msaa", "group": "Rendering", "name": "Anti-aliasing (MSAA)", "type": "choice", "risk": "low",
+      "desc": "Smooths jagged edges. Higher costs more GPU time.",
+      "doc": "Multi-sample anti-aliasing renders edges several times. Off is fastest; 4x and 8x look smoother but cost a lot on laptop and older GPUs.",
+      "options": [
+        { "value": "1", "label": "Off", "set": { "FIntDebugForceMSAASamples": 1 } },
+        { "value": "2", "label": "2x", "set": { "FIntDebugForceMSAASamples": 2 } },
+        { "value": "4", "label": "4x", "set": { "FIntDebugForceMSAASamples": 4 } },
+        { "value": "8", "label": "8x", "set": { "FIntDebugForceMSAASamples": 8 } }
+      ] },
+    { "id": "texture", "group": "Quality", "name": "Texture quality", "type": "choice", "risk": "low",
+      "desc": "Overrides texture resolution. Lower uses less video memory.",
+      "doc": "Sets how sharp textures are, no matter what Roblox's automatic graphics picks. Lower values free video memory, which helps GPUs with 2-4 GB.",
+      "options": [
+        { "value": "0", "label": "Lowest", "set": { "DFFlagTextureQualityOverrideEnabled": true, "DFIntTextureQualityOverride": 0 } },
+        { "value": "1", "label": "Low", "set": { "DFFlagTextureQualityOverrideEnabled": true, "DFIntTextureQualityOverride": 1 } },
+        { "value": "2", "label": "Medium", "set": { "DFFlagTextureQualityOverrideEnabled": true, "DFIntTextureQualityOverride": 2 } },
+        { "value": "3", "label": "High", "set": { "DFFlagTextureQualityOverrideEnabled": true, "DFIntTextureQualityOverride": 3 } }
+      ] },
+    { "id": "frm", "group": "Quality", "name": "Quality level lock", "type": "int", "risk": "medium",
+      "flag": "DFIntDebugFRMQualityLevelOverride", "min": 1, "max": 21, "chips": [1, 5, 8, 10, 15, 21],
+      "desc": "Locks Roblox's graphics quality level (1 to 21).",
+      "doc": "Roblox's automatic graphics keeps raising and lowering quality, which causes stutter. Locking a level keeps frames steady. It is a debug flag, so Roblox may change how it behaves." },
+    { "id": "grass", "group": "Quality", "name": "Grass", "type": "choice", "risk": "low",
+      "desc": "Removes terrain grass, a cheap FPS win on grassy maps.",
+      "doc": "Sets how far away terrain grass is drawn. Off removes it entirely.",
+      "options": [ { "value": "off", "label": "Off", "set": { "FIntFRMMaxGrassDistance": 0, "FIntFRMMinGrassDistance": 0 } } ] },
+    { "id": "grassmotion", "group": "Quality", "name": "Still grass", "type": "bool", "risk": "low",
+      "flag": "FIntGrassMovementReducedMotionFactor", "on": 0,
+      "desc": "Stops grass from swaying.",
+      "doc": "Reduced-motion setting for grass. Calmer to look at and slightly cheaper to draw." },
+    { "id": "lod", "group": "Quality", "name": "Detail distance", "type": "choice", "risk": "low",
+      "desc": "Switches detailed parts to simpler versions sooner.",
+      "doc": "Controls when unions and meshes (CSG) swap to lower-detail versions as they get further away. 'Performance' swaps immediately, which helps on large detailed maps.",
+      "options": [ { "value": "perf", "label": "Performance", "set": { "DFIntCSGLevelOfDetailSwitchingDistance": 0, "DFIntCSGLevelOfDetailSwitchingDistanceL12": 0, "DFIntCSGLevelOfDetailSwitchingDistanceL23": 0, "DFIntCSGLevelOfDetailSwitchingDistanceL34": 0 } } ] },
+    { "id": "pausevoxel", "group": "Quality", "name": "Freeze lighting updates", "type": "bool", "risk": "medium",
+      "flag": "DFFlagDebugPauseVoxelizer", "on": true,
+      "desc": "Stops recalculating voxel lighting. Faster on old PCs, but lighting won't react to moving objects.",
+      "doc": "A debug flag that pauses the voxelizer that updates lighting. Big help on very weak hardware; shadows and light may look wrong when things move." },
+    { "id": "skygray", "group": "Quality", "name": "Plain gray sky", "type": "bool", "risk": "medium",
+      "flag": "FFlagDebugSkyGray", "on": true,
+      "desc": "Replaces the skybox with flat gray.",
+      "doc": "A debug flag that removes the sky texture. Mostly a visual preference; tiny savings on video memory." },
+    { "id": "dpi", "group": "Window", "name": "Ignore Windows display scaling", "type": "bool", "risk": "low",
+      "flag": "DFFlagDisableDPIScale", "on": true,
+      "desc": "Stops Roblox from scaling its window with your Windows display scale.",
+      "doc": "Useful on high-DPI laptops where Roblox's interface looks too big or blurry." },
+    { "id": "altenter", "group": "Window", "name": "Alt+Enter fullscreen fix", "type": "bool", "risk": "low",
+      "flag": "FFlagHandleAltEnterFullscreenManually", "on": false,
+      "desc": "Hands Alt+Enter back to Windows. Try it if fullscreen toggling misbehaves.",
+      "doc": "Changes who handles the Alt+Enter fullscreen shortcut." },
+
+    { "id": "fps", "group": "Ignored by Roblox", "name": "FPS cap", "type": "int", "allowlisted": false,
+      "flag": "DFIntTaskSchedulerTargetFps", "min": 10, "max": 1000, "chips": [60, 120, 144, 165, 240, 360],
+      "manual": "Roblox ignores this flag now. In a game, open Roblox's Settings and set Maximum Frame Rate to {value}.",
+      "desc": "Not on Roblox's allowlist. Use Roblox's own Maximum Frame Rate setting instead.",
+      "doc": "The old FPS-unlock flag. Since the allowlist it does nothing, but Roblox added an official Maximum Frame Rate option in its in-game settings, which BrainStrap points you to." },
+    { "id": "lighting", "group": "Ignored by Roblox", "name": "Lighting technology", "type": "choice", "allowlisted": false,
+      "desc": "Not on Roblox's allowlist.", "doc": "Used to force Voxel, ShadowMap or Future lighting. Roblox now ignores these flags.",
+      "options": [
+        { "value": "voxel", "label": "Voxel", "set": { "DFFlagDebugRenderForceTechnologyVoxel": true } },
+        { "value": "future", "label": "Future", "set": { "FFlagDebugForceFutureIsBrightPhase3": true } }
+      ] },
+    { "id": "postfx", "group": "Ignored by Roblox", "name": "Disable post-processing", "type": "bool", "allowlisted": false,
+      "flag": "FFlagDisablePostFx", "on": true, "desc": "Not on Roblox's allowlist.", "doc": "Used to turn off bloom and blur. Roblox now ignores it." },
+    { "id": "showfps", "group": "Ignored by Roblox", "name": "FPS counter flag", "type": "bool", "allowlisted": false,
+      "flag": "FFlagDebugDisplayFPS", "on": true, "desc": "Not on Roblox's allowlist. Use BrainHUD or Shift+F5 in Roblox instead.", "doc": "Used to show a debug FPS counter. Roblox's own Shift+F5 stats and BrainHUD replace it." }
+  ],
+  "presets": [
+    { "id": "balanced", "name": "Balanced", "desc": "Steady frames with Roblox's look intact.",
+      "values": { "frm": "10", "msaa": "2", "grassmotion": "true" } },
+    { "id": "performance", "name": "Performance", "desc": "Drops the expensive effects for more FPS.",
+      "values": { "msaa": "1", "texture": "1", "frm": "5", "grass": "off", "grassmotion": "true", "lod": "perf" } },
+    { "id": "quality", "name": "Quality", "desc": "Sharper and smoother edges, for a strong GPU.",
+      "values": { "msaa": "4", "texture": "3", "frm": "18" } },
+    { "id": "potato", "name": "Potato", "desc": "For very old laptops. Lowest everything.",
+      "values": { "api": "d3d11", "msaa": "1", "texture": "0", "frm": "1", "grass": "off", "grassmotion": "true", "lod": "perf", "pausevoxel": "true", "skygray": "true" } }
+  ]
+}

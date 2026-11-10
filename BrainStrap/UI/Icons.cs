@@ -43,7 +43,7 @@ internal static class Icons
     /// <summary>An icon that follows the surrounding text colour.</summary>
     public static FrameworkElement Make(string name, double size = 18, double stroke = 1.8, string? brush = null)
     {
-        var path = new Path
+        var path = new System.Windows.Shapes.Path
         {
             StrokeThickness = stroke, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
             Width = 24, Height = 24, SnapsToDevicePixels = false,

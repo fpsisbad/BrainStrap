@@ -48,9 +48,9 @@ internal static class LifePage
             }, ghost: true))));
 
         // ── BrainSight: a crosshair overlay ──
-        var c = s.Crosshair;
+        var sight = s.Crosshair;
         var preview = new Border { Width = 150, Height = 150, CornerRadius = new CornerRadius(16), Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x3A, 0x33)), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 14) };
-        void Redraw() { preview.Child = CrosshairOverlay.Draw(c, 150); }
+        void Redraw() { preview.Child = CrosshairOverlay.Draw(sight, 150); }
         Redraw();
         Slider S(double min, double max, double value, Action<double> set)
         {
@@ -61,18 +61,18 @@ internal static class LifePage
         }
         body.Children.Add(Ui.Card(
             Ui.Head("target", "BrainSight", "A crosshair in the middle of your screen while Roblox is in front. It is BrainStrap's own see-through window, like the crosshair some gaming monitors draw; nothing is added to the game."),
-            Ui.ToggleRow("Show a crosshair while playing", "", c.Enabled, on => { c.Enabled = on; AppState.Save("Crosshair " + (on ? "on" : "off")); }),
+            Ui.ToggleRow("Show a crosshair while playing", "", sight.Enabled, on => { sight.Enabled = on; AppState.Save("Crosshair " + (on ? "on" : "off")); }),
             preview,
             Ui.Lbl("Shape"),
-            Ui.Chips(new[] { ("Cross", "cross"), ("Dot", "dot"), ("Circle", "circle"), ("T", "tee") }, c.Shape, v => { c.Shape = v; AppState.Save("Crosshair shape"); Redraw(); }),
+            Ui.Chips(new[] { ("Cross", "cross"), ("Dot", "dot"), ("Circle", "circle"), ("T", "tee") }, sight.Shape, v => { sight.Shape = v; AppState.Save("Crosshair shape"); Redraw(); }),
             Ui.Lbl("Colour", 8),
-            Ui.Chips(new[] { ("White", "#FFFFFF"), ("Green", "#3DFF7A"), ("Cyan", "#40E8FF"), ("Yellow", "#FFE14D"), ("Red", "#FF4D5E"), ("Pink", "#FF6AD5") }, c.Color, v => { c.Color = v; AppState.Save("Crosshair colour"); Redraw(); }),
+            Ui.Chips(new[] { ("White", "#FFFFFF"), ("Green", "#3DFF7A"), ("Cyan", "#40E8FF"), ("Yellow", "#FFE14D"), ("Red", "#FF4D5E"), ("Pink", "#FF6AD5") }, sight.Color, v => { sight.Color = v; AppState.Save("Crosshair colour"); Redraw(); }),
             new Border { Height = 6 },
-            Ui.KV("Size", S(4, 60, c.Size, v => c.Size = (int)v), 110),
-            Ui.KV("Thickness", S(1, 8, c.Thickness, v => c.Thickness = (int)v), 110),
-            Ui.KV("Gap", S(0, 30, c.Gap, v => c.Gap = (int)v), 110),
-            Ui.KV("Opacity", S(0.2, 1, c.Opacity, v => c.Opacity = v), 110),
-            Ui.ToggleRow("Dark outline", "Keeps it visible on bright scenes.", c.Outline, on => { c.Outline = on; AppState.Save(); Redraw(); })));
+            Ui.KV("Size", S(4, 60, sight.Size, v => sight.Size = (int)v), 110),
+            Ui.KV("Thickness", S(1, 8, sight.Thickness, v => sight.Thickness = (int)v), 110),
+            Ui.KV("Gap", S(0, 30, sight.Gap, v => sight.Gap = (int)v), 110),
+            Ui.KV("Opacity", S(0.2, 1, sight.Opacity, v => sight.Opacity = v), 110),
+            Ui.ToggleRow("Dark outline", "Keeps it visible on bright scenes.", sight.Outline, on => { sight.Outline = on; AppState.Save(); Redraw(); })));
 
         // ── Game Library + Playtime Journal ──
         var lib = new WrapPanel();

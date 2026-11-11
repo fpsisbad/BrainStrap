@@ -112,7 +112,7 @@
     </Style>
     <!-- a smaller card inside a card (tiles, list items) -->
     <Style x:Key="Tile" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource Pill}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{DynamicResource Line}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="10" />

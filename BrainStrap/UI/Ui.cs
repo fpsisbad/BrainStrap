@@ -476,7 +476,7 @@ internal static class Ui
         if (desc.Length > 0)
         {
             var d = Desc(desc, 6);
-            if (d is TextBlock tb) tb.MaxWidth = 620;
+            if (d is TextBlock tb) { tb.MaxWidth = 620; tb.HorizontalAlignment = HorizontalAlignment.Left; }
             sp.Children.Add(d);
         }
         return sp;

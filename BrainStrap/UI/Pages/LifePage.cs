@@ -17,6 +17,55 @@ internal static class LifePage
         var s = AppState.S;
         var page = Ui.Page("BrainLife", "Everything around the game: an FPS overlay, your library and playtime, screenshots, and BrainStrap looking after your PC while you play.", out var body);
 
+        // ── BrainRank and the weekly recap ──
+        var rank = Rank.Get(s);
+        var wk = Rank.Week();
+        body.Children.Add(Ui.Readouts(
+            Ui.StatTile("shield", $"{rank.Level} {rank.Title.ToLowerInvariant()}", "BrainRank"),
+            Ui.StatTile("bolt", $"{rank.Streak} {(rank.Streak == 1 ? "day" : "days")}", "Streak"),
+            Ui.StatTile("clock", $"{rank.Hours:0.#} hours", "Played in total"),
+            Ui.StatTile("play", $"{rank.Sessions} sessions", "Through BrainStrap")));
+        var badges = new WrapPanel { Margin = new Thickness(0, 4, 0, 0) };
+        foreach (var bd in rank.Badges)
+        {
+            var cell = new StackPanel { Width = 200, Margin = new Thickness(0, 0, 14, 16), Opacity = bd.Earned ? 1 : 0.42 };
+            cell.Children.Add(Ui.Title((bd.Earned ? "● " : "○ ") + bd.Name, 14));
+            cell.Children.Add(Ui.Small(bd.How, 2));
+            badges.Children.Add(cell);
+        }
+        var days = new Grid { Height = 70, Margin = new Thickness(0, 6, 0, 4) };
+        var maxDay = Math.Max(30, wk.MinutesPerDay.Max());
+        for (var d = 0; d < 7; d++)
+        {
+            days.ColumnDefinitions.Add(new ColumnDefinition());
+            var col = new Grid { Margin = new Thickness(0, 0, 10, 0) };
+            col.RowDefinitions.Add(new RowDefinition());
+            col.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var barH = Math.Max(2, 50 * wk.MinutesPerDay[d] / maxDay);
+            var bar = new Border { Height = barH, VerticalAlignment = VerticalAlignment.Bottom };
+            bar.SetResourceReference(Border.BackgroundProperty, d == 6 ? "Ink" : "Muted");
+            col.Children.Add(bar);
+            var lbl = Ui.Text(DateTime.Today.AddDays(d - 6).ToString("ddd").ToUpperInvariant(), 9.5, "Dim", mono: true);
+            lbl.Margin = new Thickness(0, 6, 0, 0);
+            Grid.SetRow(lbl, 1);
+            col.Children.Add(lbl);
+            Grid.SetColumn(col, d);
+            days.Children.Add(col);
+        }
+        body.Children.Add(Ui.Card(
+            Ui.Head("", rank.Level >= 99 ? "Level 99. That's the top." : $"{rank.ToNext} XP to level {rank.Level + 1}", "One XP per minute played, plus a little for every session and for smooth ones. It's worked out from your own history on this PC and has no effect on Roblox."),
+            Ui.Bar(rank.Progress, 3),
+            Ui.Lbl("Your week", 14),
+            Ui.Text(wk.Sessions == 0 ? "No sessions in the last seven days." :
+                $"{wk.Hours:0.#} hours over {wk.Days} {(wk.Days == 1 ? "day" : "days")}. Most played: {wk.TopGame} ({wk.TopGameMinutes:0} min). Longest session {wk.LongestMinutes:0} min{(wk.BestFps is double bf ? $", best average {bf:0} fps" : "")}.", 15, "Ink"),
+            days,
+            Ui.Lbl("Badges", 18),
+            badges));
+        var breaks = new[] { ("Off", "0"), ("45 min", "45"), ("1 hour", "60"), ("90 min", "90"), ("2 hours", "120") };
+        body.Children.Add(Ui.Card(
+            Ui.Head("", "Break reminder", "A quiet notification after this much play in one go."),
+            Ui.Chips(breaks, s.Life.BreakMinutes.ToString(), v => { s.Life.BreakMinutes = int.Parse(v); AppState.Save("Break reminder"); })));
+
         // ── BrainHUD ──
         var op = new Slider { Minimum = 0.3, Maximum = 1, Value = s.Hud.Opacity, Width = 220 };
         op.LostMouseCapture += (_, _) => { s.Hud.Opacity = op.Value; AppState.Save("HUD opacity"); };

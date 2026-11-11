@@ -59,6 +59,21 @@ internal static class LaunchPage
                 })),
             setupMsg));
 
+        // ── BrainStrap itself ──
+        var upMsg = Ui.Small("", 8);
+        body.Children.Add(Ui.Card(
+            Ui.Head("", $"BrainStrap {Installer.Version}", "New versions come from BrainStrap's GitHub releases and are only installed if their fingerprint matches."),
+            Ui.ToggleRow("Check for updates once a day", "", s.AutoUpdate, v => { s.AutoUpdate = v; AppState.Save("Auto update " + (v ? "on" : "off")); }),
+            Ui.Buttons(Ui.AsyncPill("Check now", async () =>
+            {
+                var r = await Updater.CheckAsync(s);
+                if (r == null) { Ui.Msg(upMsg, "You have the newest version.", "Ok"); return; }
+                Ui.Msg(upMsg, $"Downloading {r.Version}…");
+                var problem = await Updater.ApplyAsync(r);
+                if (problem == null) Application.Current.Shutdown(0); else Ui.Msg(upMsg, problem, "Bad");
+            }, ghost: true)),
+            upMsg));
+
         // ── options ──
         body.Children.Add(Ui.Card(
             Ui.Head("rocket", "Launch options"),

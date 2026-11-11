@@ -19,7 +19,7 @@ internal static class Ui
 
     public static TextBlock Sub(string text) => new() { Text = text, Style = Sty("Sub") };
 
-    public static TextBlock Lbl(string text, double top = 0) => new() { Text = text.ToUpperInvariant(), Style = Sty("Lbl"), Margin = new Thickness(0, top, 0, 10) };
+    public static TextBlock Lbl(string text, double top = 0) => new() { Text = text.ToUpperInvariant(), Style = Sty("Lbl"), Margin = new Thickness(0, top, 0, 12) };
 
     public static TextBlock Small(string text, double top = 2)
     {
@@ -48,6 +48,11 @@ internal static class Ui
         foreach (var c in children) sp.Children.Add(c);
         return new Border { Style = Sty("Card"), Child = sp };
     }
+
+    static int sectionNo;
+    /// <summary>Restarts the A, B, C… lettering of sections (each page starts at A).</summary>
+    public static void ResetSections() => sectionNo = 0;
+    static string NextLetter() => ((char)('A' + sectionNo++ % 26)).ToString();
 
     public static Border Card(Panel content) => new() { Style = Sty("Card"), Child = content };
 
@@ -286,6 +291,7 @@ internal static class Ui
 
     public static ScrollViewer Page(string title, string sub, out StackPanel body)
     {
+        ResetSections();
         body = new StackPanel { Margin = new Thickness(44, 14, 44, 44), MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
         if (title.Length > 0)
         {
@@ -296,40 +302,37 @@ internal static class Ui
     }
 
     /// <summary>The big panel at the top of a page: a small label, a large headline, a line of text and the main actions.</summary>
-    public static Border Hero(string eyebrow, string title, string sub, FrameworkElement? right, params UIElement[] actions)
+    public static FrameworkElement Hero(string eyebrow, string title, string sub, FrameworkElement? right, params UIElement[] actions)
     {
-        var sp = new StackPanel { Margin = new Thickness(0, 0, right != null ? 230 : 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom };
         var eye = Lbl(eyebrow);
-        eye.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         sp.Children.Add(eye);
-        var h = new TextBlock { Text = title, FontSize = 44, FontWeight = FontWeights.ExtraBold, TextWrapping = TextWrapping.Wrap, LineHeight = 50, Margin = new Thickness(0, 4, 0, 10) };
+        var h = new TextBlock { Text = title, FontSize = 104, TextWrapping = TextWrapping.Wrap, LineHeight = 104, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, Margin = new Thickness(-5, 0, 0, 14), FontStyle = FontStyles.Italic };
+        h.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
         sp.Children.Add(h);
         if (!Minimal && sub.Length > 0)
         {
-            var t = Text(sub, 15, "Muted");
-            t.LineHeight = 23;
-            t.MaxWidth = 520;
+            var t = Text(sub, 17, "Muted");
+            t.LineHeight = 26;
+            t.MaxWidth = 560;
             t.HorizontalAlignment = HorizontalAlignment.Left;
             sp.Children.Add(t);
         }
         if (actions.Length > 0)
         {
             var w = Buttons(actions);
-            w.Margin = new Thickness(0, 22, 0, 0);
+            w.Margin = new Thickness(0, 30, 0, 0);
             sp.Children.Add(w);
         }
-        var grid = new Grid();
+        var grid = new Grid { Margin = new Thickness(0, 30, 0, 44) };
         grid.Children.Add(sp);
         if (right != null)
         {
             right.HorizontalAlignment = HorizontalAlignment.Right;
-            right.VerticalAlignment = VerticalAlignment.Center;
+            right.VerticalAlignment = VerticalAlignment.Top;
             grid.Children.Add(right);
         }
-        var card = new Border { CornerRadius = new CornerRadius(26), Padding = new Thickness(34, 32, 34, 32), Margin = new Thickness(0, 4, 0, 16), BorderThickness = new Thickness(1), Child = grid, ClipToBounds = true };
-        card.SetResourceReference(Border.BackgroundProperty, "HeroBrush");
-        card.SetResourceReference(Border.BorderBrushProperty, "CardLineHover");
-        return card;
+        return grid;
     }
 
     /// <summary>The big round Play button: rings around it, one of them slowly turning, and a halo that breathes.</summary>
@@ -359,7 +362,6 @@ internal static class Ui
             { AutoReverse = true, RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.SineEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut } };
         ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, breathe);
         ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, breathe);
-        g.Children.Add(halo);
 
         var tri = new System.Windows.Shapes.Path { Data = Geometry.Parse("M9 5.5 L20 12 L9 18.5 Z"), Width = 24, Height = 24, StrokeLineJoin = PenLineJoin.Round, StrokeThickness = 2 };
         tri.SetResourceReference(Shape.FillProperty, "AccentInk");
@@ -380,7 +382,7 @@ internal static class Ui
         track.SetResourceReference(Border.BackgroundProperty, "Pill");
         Grid.SetColumnSpan(track, 2);
         var fill = new Border { CornerRadius = new CornerRadius(height / 2) };
-        fill.SetResourceReference(Border.BackgroundProperty, "Accent");
+        fill.SetResourceReference(Border.BackgroundProperty, "Ink");
         g.Children.Add(track);
         g.Children.Add(fill);
         return g;
@@ -389,12 +391,7 @@ internal static class Ui
     /// <summary>A pill button with an icon in front of the text.</summary>
     public static Button IconPill(string icon, string text, Action click, bool ghost = false, double height = 44)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
-        var ic = Icons.Make(icon, 16, 2.1);
-        ic.Margin = new Thickness(0, 0, 9, 0);
-        row.Children.Add(ic);
-        row.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-        var b = new Button { Content = row, Style = Sty(ghost ? "GhostButton" : "PillButton"), Margin = new Thickness(0, 0, 10, 8), Height = height, FontSize = 14, Padding = new Thickness(22, 0, 24, 0) };
+        var b = new Button { Content = ghost ? text : text + "   →", Style = Sty(ghost ? "GhostButton" : "PillButton"), Margin = new Thickness(0, 0, 10, 8), Height = height, FontSize = 14, Padding = new Thickness(24, 0, 24, 0) };
         b.Click += (_, _) => Guard(click);
         return b;
     }
@@ -402,23 +399,47 @@ internal static class Ui
     /// <summary>A glass tile: an icon, a big value and a caption. Clickable when given an action.</summary>
     public static FrameworkElement StatTile(string icon, string value, string caption, string brush = "Ink", Action? click = null)
     {
+        // a readout: small caps label, a large serif number, the unit beside it
         var sp = new StackPanel();
-        var badge = Icons.Badge(icon, 36, brush == "Ink" ? "Muted" : brush);
-        badge.HorizontalAlignment = HorizontalAlignment.Left;
-        badge.Margin = new Thickness(0, 0, 0, 14);
-        sp.Children.Add(badge);
-        var v = Text(value, 21, brush, FontWeights.ExtraBold);
-        v.TextWrapping = TextWrapping.NoWrap;
-        v.TextTrimming = TextTrimming.CharacterEllipsis;
-        sp.Children.Add(v);
-        sp.Children.Add(Small(caption, 2));
+        sp.Children.Add(Lbl(caption, 0));
+        var parts = value.Split(' ', 2);
+        var row = new WrapPanel();
+        var num = new TextBlock { Text = parts[0], FontSize = parts[0].Length > 8 ? 40 : 66, LineHeight = 70, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, Margin = new Thickness(-2, -4, 0, 0) };
+        num.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
+        num.SetResourceReference(TextBlock.ForegroundProperty, brush);
+        row.Children.Add(num);
+        if (parts.Length > 1)
+        {
+            var unit = Text(parts[1], 13.5, "Muted");
+            unit.VerticalAlignment = VerticalAlignment.Bottom;
+            unit.Margin = new Thickness(7, 0, 0, 12);
+            row.Children.Add(unit);
+        }
+        sp.Children.Add(row);
         if (click != null)
         {
-            var b = new Button { Content = sp, Style = Sty("TileButton"), Padding = new Thickness(18) };
+            var b = new Button { Content = sp, Style = Sty("ReadoutButton") };
             b.Click += (_, _) => Guard(click);
             return b;
         }
-        return new Border { Style = Sty("Tile"), Padding = new Thickness(18), Child = sp };
+        return sp;
+    }
+
+    /// <summary>Readouts side by side, separated by hairlines, ruled above and below.</summary>
+    public static Border Readouts(params FrameworkElement[] items)
+    {
+        var g = new Grid();
+        for (var i = 0; i < items.Length; i++)
+        {
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var cell = new Border { Child = items[i], Padding = new Thickness(i == 0 ? 0 : 22, 20, 12, 22), BorderThickness = new Thickness(i == 0 ? 0 : 1, 0, 0, 0) };
+            cell.SetResourceReference(Border.BorderBrushProperty, "Line2");
+            Grid.SetColumn(cell, i);
+            g.Children.Add(cell);
+        }
+        var b = new Border { Child = g, BorderThickness = new Thickness(0, 1, 0, 0) };
+        b.SetResourceReference(Border.BorderBrushProperty, "Line2");
+        return b;
     }
 
     /// <summary>Equal-width tiles in a row with gaps between them.</summary>
@@ -445,22 +466,20 @@ internal static class Ui
         return b;
     }
 
-    /// <summary>A card heading with an icon badge, a title and a line of description.</summary>
-    public static Grid Head(string icon, string title, string desc = "")
+    /// <summary>A section heading: a serif title and a line of description.</summary>
+    public static StackPanel Head(string icon, string title, string desc = "")
     {
-        var g = new Grid { Margin = new Thickness(0, 0, 0, 16) };
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var badge = Icons.Badge(icon, 40);
-        badge.Margin = new Thickness(0, 0, 14, 0);
-        badge.VerticalAlignment = VerticalAlignment.Top;
-        var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        sp.Children.Add(Title(title, 16.5));
-        if (desc.Length > 0) sp.Children.Add(Desc(desc));
-        Grid.SetColumn(sp, 1);
-        g.Children.Add(badge);
-        g.Children.Add(sp);
-        return g;
+        var sp = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
+        var t = new TextBlock { Text = title, FontSize = 30, TextWrapping = TextWrapping.Wrap, LineHeight = 33, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, Margin = new Thickness(-1, 0, 0, 0) };
+        t.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
+        sp.Children.Add(t);
+        if (desc.Length > 0)
+        {
+            var d = Desc(desc, 6);
+            if (d is TextBlock tb) tb.MaxWidth = 620;
+            sp.Children.Add(d);
+        }
+        return sp;
     }
 
     public static void Msg(TextBlock t, string text, string brush = "Muted")

@@ -13,26 +13,29 @@ namespace BrainStrap.UI;
 /// <summary>BrainThemes: built-in themes, the gallery, the user's own themes and share codes.</summary>
 internal static class Themes
 {
-    static ThemeDef T(string id, string name, bool dark, string bg, string panel, string panel2, string ink, string muted, string dim, string pill, string pillH, string accent) =>
-        new() { Id = id, Name = name, Dark = dark, Bg = bg, Panel = panel, Panel2 = panel2, Ink = ink, Muted = muted, Dim = dim, Pill = pill, PillHover = pillH, Accent = accent };
+    static ThemeDef T(string id, string name, bool dark, string bg, string panel, string panel2, string ink, string muted, string dim, string pill, string pillH, string accent, string? accent2 = null) =>
+        new() { Id = id, Name = name, Dark = dark, Bg = bg, Panel = panel, Panel2 = panel2, Ink = ink, Muted = muted, Dim = dim, Pill = pill, PillHover = pillH, Accent = accent, Accent2 = accent2 };
 
     public static readonly ThemeDef[] BuiltIn =
     {
+        T("atelier",  "Atelier",  true,  "#0C0C0E", "#141416", "#1B1B1E", "#F3F0EA", "#A19E97", "#6C6A66", "#1F1F22", "#2A2A2E", "#F3F0EA", "#F3F0EA"),
+        T("aurora",   "Aurora",   true,  "#08070E", "#12101C", "#1A1728", "#F4F2FF", "#A9A4C2", "#6F6A8A", "#221E33", "#2C2742", "#8B6CFF", "#38D6FF"),
+        T("nebula",   "Nebula",   true,  "#0A070F", "#150F1D", "#1D152A", "#FBF2FF", "#B5A3C4", "#77688A", "#291D38", "#352648", "#9B5CFF", "#FF5CA8"),
         T("silk",     "Silk",     true,  "#121317", "#18191D", "#1D1E23", "#F2F3F5", "#A1A3AA", "#6E7077", "#26272C", "#303137", "#F2F3F5"),
         T("obsidian", "Obsidian", true,  "#0A0A0C", "#111114", "#16161A", "#FFFFFF", "#9B9BA3", "#62626A", "#1C1C21", "#26262C", "#FFFFFF"),
-        T("ember",    "Ember",    true,  "#17110E", "#1E1713", "#241B16", "#FBF1EA", "#B3A196", "#7A6A5F", "#2E221B", "#3A2B22", "#FF8A5B"),
-        T("aqua",     "Aqua",     true,  "#0E1516", "#131C1E", "#182325", "#EAFBF9", "#8FB0AD", "#5C7673", "#1D2C2E", "#26393C", "#5EE0D0"),
-        T("violet",   "Violet",   true,  "#131119", "#191622", "#1F1B2A", "#F2EEFF", "#A59CC2", "#6D6585", "#272235", "#322C44", "#A98BFF"),
-        T("rose",     "Rose",     true,  "#171116", "#1E161D", "#251B24", "#FFEFF5", "#B79BA8", "#7C6573", "#2F2230", "#3C2B3E", "#FF7AA8"),
+        T("ember",    "Ember",    true,  "#17110E", "#1E1713", "#241B16", "#FBF1EA", "#B3A196", "#7A6A5F", "#2E221B", "#3A2B22", "#FF8A5B", "#FF4D8D"),
+        T("aqua",     "Aqua",     true,  "#0E1516", "#131C1E", "#182325", "#EAFBF9", "#8FB0AD", "#5C7673", "#1D2C2E", "#26393C", "#5EE0D0", "#5B8CFF"),
+        T("violet",   "Violet",   true,  "#131119", "#191622", "#1F1B2A", "#F2EEFF", "#A59CC2", "#6D6585", "#272235", "#322C44", "#A98BFF", "#FF7AD9"),
+        T("rose",     "Rose",     true,  "#171116", "#1E161D", "#251B24", "#FFEFF5", "#B79BA8", "#7C6573", "#2F2230", "#3C2B3E", "#FF7AA8", "#FFB36B"),
         T("daylight", "Daylight", false, "#F3F4F6", "#FFFFFF", "#EEF0F3", "#111216", "#5C5F66", "#8C8F96", "#E4E6EA", "#D8DBE0", "#111216"),
     };
 
     /// <summary>Featured community-style themes that ship with BrainStrap.</summary>
     public static readonly ThemeDef[] Gallery =
     {
-        T("g-midnight", "Midnight", true, "#0B0F1A", "#111727", "#161E31", "#E8EEFF", "#8E9AB8", "#5A6582", "#1C2540", "#26304F", "#6EA8FF"),
-        T("g-forest",   "Forest",   true, "#0E1410", "#141C16", "#19231B", "#ECF7EE", "#93AE98", "#5E7563", "#1F2C22", "#29392D", "#7BE495"),
-        T("g-sunset",   "Sunset",   true, "#1A1013", "#22151A", "#2A1A20", "#FFF0EC", "#C49A9F", "#86656A", "#33202A", "#432A36", "#FFB36B"),
+        T("g-midnight", "Midnight", true, "#0B0F1A", "#111727", "#161E31", "#E8EEFF", "#8E9AB8", "#5A6582", "#1C2540", "#26304F", "#6EA8FF", "#9B7CFF"),
+        T("g-forest",   "Forest",   true, "#0E1410", "#141C16", "#19231B", "#ECF7EE", "#93AE98", "#5E7563", "#1F2C22", "#29392D", "#7BE495", "#3DD6C6"),
+        T("g-sunset",   "Sunset",   true, "#1A1013", "#22151A", "#2A1A20", "#FFF0EC", "#C49A9F", "#86656A", "#33202A", "#432A36", "#FFB36B", "#FF5C8A"),
         T("g-gold",     "Royal Gold", true, "#121110", "#1A1815", "#211E1A", "#FAF4E6", "#B5AA92", "#7A715E", "#2A261F", "#363027", "#F5C451"),
         T("g-arctic",   "Arctic",   false, "#EEF4F8", "#FFFFFF", "#E6EEF3", "#0D1B24", "#4E6472", "#86A0AE", "#DDE8EE", "#CEDDE6", "#1B8FD6"),
         T("g-terminal", "Terminal", true, "#050805", "#0A100A", "#0F170F", "#C8FFC8", "#6FAF6F", "#3F6F3F", "#132013", "#1A2E1A", "#39FF6A"),
@@ -77,14 +80,29 @@ internal static class Themes
     /// <summary>The bundled Manrope, then Windows' own font if a glyph is missing.</summary>
     public static FontFamily DefaultFont => new(new Uri("pack://application:,,,/"), "./Assets/Fonts/#Manrope, Segoe UI Variable Display, Segoe UI");
 
+    /// <summary>The two colours of the accent gradient in effect.</summary>
+    public static (Color a, Color b) Accents2(Settings s)
+    {
+        var t = Effective(s);
+        if (!s.Studio.Minimal && IsHex(s.Accent))
+        {
+            // a hand-picked accent: pair it with a lighter version of itself
+            var c = C(s.Accent!);
+            return (c, Mix(c, C(t.Ink), 0.45));
+        }
+        var a = C(t.Accent);
+        return (a, IsHex(t.Accent2) ? C(t.Accent2!) : Mix(a, C(t.Dark ? t.Muted : t.Dim), 0.35));
+    }
+
     public static void Apply(Settings s)
     {
         var t = Effective(s);
         var r = Application.Current.Resources;
         Color bg = C(t.Bg), panel = C(t.Panel), ink = C(t.Ink);
         var glass = s.Studio.Background != "none" && !s.Studio.Minimal;   // see-through surfaces over the live backdrop
-        var accent = C(!s.Studio.Minimal && IsHex(s.Accent) ? s.Accent! : t.Accent);
-        var lum = (0.299 * accent.R + 0.587 * accent.G + 0.114 * accent.B) / 255.0;
+        var (accent, accent2) = Accents2(s);
+        var mid = Mix(accent, accent2, 0.5);
+        var lum = (0.299 * mid.R + 0.587 * mid.G + 0.114 * mid.B) / 255.0;
 
         Put(r, "Bg", glass && t.Dark ? Mix(bg, Colors.Black, 0.25) : bg);
         Put(r, "Panel", glass ? A(panel, 0.72) : panel);
@@ -102,6 +120,11 @@ internal static class Themes
         Put(r, "FieldBrush", glass ? (t.Dark ? A(Colors.Black, 0.34) : A(Colors.White, 0.72)) : C(t.Panel2));
         Put(r, "SidebarBrush", glass ? A(Mix(bg, panel, 0.5), t.Dark ? 0.62 : 0.80) : panel);
         Put(r, "Accent", accent);
+        Put(r, "Accent2", accent2);
+        // the signature gradient: buttons, switches, the selected page, progress
+        r["AccentGrad"] = Grad(new Point(0, 0), new Point(1, 1), (accent, 0), (accent2, 1));
+        r["AccentGradH"] = Grad(new Point(0, 0), new Point(1, 0), (accent, 0), (accent2, 1));
+        r["AccentFade"] = Grad(new Point(0, 0), new Point(0, 1), (A(mid, 0.34), 0), (A(mid, 0), 1));
         Put(r, "AccentInk", lum > 0.6 ? C("#111111") : C("#FFFFFF"));
         Put(r, "AccentSoft", A(accent, 0.13));
         Put(r, "AccentLine", A(accent, 0.45));
@@ -113,7 +136,8 @@ internal static class Themes
             : Grad(new Point(0, 0), new Point(0, 1), (top, 0), (panel, 1));
         r["CardLine"] = Grad(new Point(0, 0), new Point(1, 1), (A(ink, t.Dark ? 0.19 : 0.16), 0), (A(ink, 0.05), 1));
         r["CardLineHover"] = Grad(new Point(0, 0), new Point(1, 1), (A(Mix(ink, accent, 0.5), 0.42), 0), (A(ink, 0.10), 1));
-        r["HeroBrush"] = Grad(new Point(0, 0), new Point(1, 1), (A(Mix(panel, accent, 0.30), glass ? 0.78 : 1), 0), (A(panel, glass ? 0.62 : 1), 0.55), (A(Mix(panel, accent, 0.14), glass ? 0.70 : 1), 1));
+        r["HeroBrush"] = Grad(new Point(0, 0), new Point(1, 1), (A(Mix(panel, accent, 0.42), glass ? 0.80 : 1), 0), (A(panel, glass ? 0.64 : 1), 0.52), (A(Mix(panel, accent2, 0.30), glass ? 0.74 : 1), 1));
+        r["HeroLine"] = Grad(new Point(0, 0), new Point(1, 1), (A(accent, 0.75), 0), (A(ink, 0.10), 0.5), (A(accent2, 0.55), 1));
 
         // Custom Fonts: any font installed on this PC; otherwise the bundled Manrope
         var font = s.Studio.Font;

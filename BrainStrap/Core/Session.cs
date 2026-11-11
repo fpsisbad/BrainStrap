@@ -45,6 +45,7 @@ internal static class Session
         double Now() => Math.Round((DateTime.UtcNow - t0).TotalSeconds, 1);
         var rec = new SessionRecord { Start = DateTime.Now, PlaceId = placeId, Profile = profile };
         var live = new LiveState { Started = DateTime.UtcNow, PlaceId = placeId, Profile = profile };
+        var breaksShown = 0;
 
         using var gameMode = new GameModePlus();
         using var companions = new Companions();
@@ -147,6 +148,11 @@ internal static class Session
             }
             hud?.Update(live, DateTime.UtcNow - live.Started);
             sight?.Sync(roblox);
+            if (s.Life.BreakMinutes > 0 && (DateTime.UtcNow - live.Started).TotalMinutes >= s.Life.BreakMinutes * (breaksShown + 1))
+            {
+                breaksShown++;
+                Connect.Notify("Time for a break?", $"You've been playing for {(DateTime.UtcNow - live.Started).TotalMinutes:0} minutes.");
+            }
         }
 
         hud?.Close();

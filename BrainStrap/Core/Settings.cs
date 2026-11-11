@@ -96,6 +96,8 @@ internal sealed class ThemeDef
     public string Pill { get; set; } = "#26272C";
     public string PillHover { get; set; } = "#303137";
     public string Accent { get; set; } = "#F2F3F5";
+    /// <summary>The second colour of the accent gradient (optional; worked out from the accent when missing).</summary>
+    public string? Accent2 { get; set; }
 }
 
 internal sealed class StudioSettings
@@ -132,6 +134,8 @@ internal sealed class LifeSettings
     public bool BatteryAware { get; set; }
     public string? BatteryProfile { get; set; }
     public bool JumpList { get; set; } = true;
+    /// <summary>Remind me to take a break every this many minutes of play (0 = off).</summary>
+    public int BreakMinutes { get; set; }
     public List<Companion> Companions { get; set; } = new();
 }
 
@@ -160,7 +164,7 @@ internal sealed class Settings
     public int SchemaVersion { get; set; } = 2;
 
     // look
-    public string Theme { get; set; } = "silk";
+    public string Theme { get; set; } = "atelier";
     public string? Accent { get; set; }
 
     // launching
@@ -170,6 +174,9 @@ internal sealed class Settings
     public bool KeepRegistered { get; set; } = true;
     /// <summary>BrainStrap downloads and updates Roblox itself, straight from Roblox's servers. No other launcher needed.</summary>
     public bool ManageRoblox { get; set; } = true;
+    /// <summary>Look for a newer BrainStrap on GitHub once a day.</summary>
+    public bool AutoUpdate { get; set; } = true;
+    public DateTime LastUpdateCheck { get; set; }
     /// <summary>Which design generation these settings were last opened with (one-time upgrades).</summary>
     public int Look { get; set; }
 
@@ -316,6 +323,13 @@ internal static class SettingsStore
             if (s.Studio.Background == "none") s.Studio.Background = "silk";
             s.Look = 3;
         }
+        if (s.Look < 4)
+        {
+            // the 4th-generation look: Aurora is the new default, unless a theme or accent was picked on purpose
+            if (s.Theme == "silk" && s.Accent == null) s.Theme = "atelier";
+            s.Look = 4;
+        }
+        s.Life.BreakMinutes = Math.Clamp(s.Life.BreakMinutes, 0, 600);
         s.Studio.SilkStrength = Math.Clamp(s.Studio.SilkStrength, 0.2, 1);
         s.Crosshair.Size = Math.Clamp(s.Crosshair.Size, 4, 120);
         s.Crosshair.Thickness = Math.Clamp(s.Crosshair.Thickness, 1, 12);

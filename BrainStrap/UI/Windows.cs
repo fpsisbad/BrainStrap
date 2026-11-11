@@ -48,7 +48,7 @@ internal sealed class LaunchSplash : Window
         if (style == "silk")
         {
             // on a Canvas so the picture's own size never stretches the card
-            var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 1, 3.2, 1.9, -0.4);
+            var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), Res("Accent2"), theme.Dark, 1, 3.2, 1.9, -0.4);
             var holder = new Canvas();
             holder.Children.Add(silk);
             layers.Children.Add(holder);

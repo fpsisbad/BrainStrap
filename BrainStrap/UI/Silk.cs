@@ -20,32 +20,29 @@ internal sealed class Silk : Image
     readonly int[] px = new int[W * H];
     readonly DispatcherTimer timer;
     readonly Stopwatch clock = Stopwatch.StartNew();
-    readonly float[] lo = new float[3], hi = new float[3], sh = new float[3];
+    readonly float[] lo = new float[3], bgc = new float[3], ta = new float[3], tb = new float[3], inkc = new float[3];
+    readonly float hiK, shK;
+    readonly bool dark;
     readonly float seedX, seedY, speed;
     bool busy;
 
-    public Silk(Color bg, Color ink, Color accent, bool dark, double strength = 1, double speed = 1.5, double seedX = 0.6, double seedY = -1.2)
+    public Silk(Color bg, Color ink, Color accent, Color accent2, bool dark, double strength = 1, double speed = 1.5, double seedX = 0.6, double seedY = -1.2)
     {
-        this.seedX = (float)seedX; this.seedY = (float)seedY; this.speed = (float)speed;
+        this.seedX = (float)seedX; this.seedY = (float)seedY; this.speed = (float)speed; this.dark = dark;
         var k = (float)Math.Clamp(strength, 0.2, 1);
-        // tint: mostly the text colour, pulled a little toward the accent
         float[] V(Color c) => new[] { c.R / 255f, c.G / 255f, c.B / 255f };
-        float[] b = V(bg), i = V(ink), a = V(accent);
+        float[] b = V(bg), i = V(ink), a = V(accent), a2 = V(accent2);
+        // colourful accents can be shown stronger than white ones before text over them gets hard to read
+        var sat = ((a.Max() - a.Min()) + (a2.Max() - a2.Min())) / 2f;
+        hiK = (0.25f + 0.20f * sat) * k;
+        shK = (0.30f + 0.22f * sat) * k;
         for (var c = 0; c < 3; c++)
         {
-            var tint = i[c] * 0.62f + a[c] * 0.38f;
-            if (dark)
-            {
-                lo[c] = b[c] * 0.50f;                              // deep folds
-                hi[c] = b[c] + (tint - b[c]) * 0.25f * k;          // lit cloth
-                sh[c] = tint * 0.30f * k;                          // the sheen along a fold
-            }
-            else
-            {
-                lo[c] = b[c] + (i[c] - b[c]) * 0.16f * k;
-                hi[c] = b[c] + (1f - b[c]) * 0.75f;
-                sh[c] = 0.22f * k;
-            }
+            bgc[c] = b[c]; inkc[c] = i[c];
+            // the two colours of the cloth: mostly the accents, softened with the text colour
+            ta[c] = a[c] * (0.38f + 0.5f * sat) + i[c] * (0.62f - 0.5f * sat);
+            tb[c] = a2[c] * (0.38f + 0.5f * sat) + i[c] * (0.62f - 0.5f * sat);
+            lo[c] = dark ? b[c] * 0.50f : b[c] + (i[c] - b[c]) * 0.16f * k;
         }
         Source = bmp;
         Stretch = Stretch.UniformToFill;
@@ -124,10 +121,23 @@ internal sealed class Silk : Image
                 float ux = (x + .5f) / W - .5f, uy = (y + .5f) / H - .5f;
                 var vig = 1f - .18f * Smooth(.5f, 1.1f, MathF.Sqrt(ux * ux + uy * uy));
 
+                // which of the two colours this bit of cloth shows
+                var mix = Math.Clamp(.5f + 1.1f * nx + .25f * MathF.Sin(1.3f * v + .03f * t), 0f, 1f);
                 int Ch(int c)
                 {
-                    var val = (lo[c] + (hi[c] - lo[c]) * kd + sheen * sh[c] * light - crease * .05f) * vig;
-                    return (int)(Math.Clamp(val, 0f, 1f) * 255f + .5f);
+                    var tint = ta[c] + (tb[c] - ta[c]) * mix;
+                    float val;
+                    if (dark)
+                    {
+                        var hi = bgc[c] + (tint - bgc[c]) * hiK;
+                        val = lo[c] + (hi - lo[c]) * kd + sheen * (tint * .75f + inkc[c] * .25f) * shK * light - crease * .05f;
+                    }
+                    else
+                    {
+                        var hi = bgc[c] + (1f - bgc[c]) * .75f;
+                        val = lo[c] + (hi - lo[c]) * kd + sheen * .22f * light - crease * .05f + (tint - bgc[c]) * .06f * kd;
+                    }
+                    return (int)(Math.Clamp(val * vig, 0f, 1f) * 255f + .5f);
                 }
                 px[row + x] = (Ch(0) << 16) | (Ch(1) << 8) | Ch(2);
             }

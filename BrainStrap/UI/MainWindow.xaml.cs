@@ -52,6 +52,7 @@ public partial class MainWindow : Window
             LoadControls();
             ApplyBackground();
             UpdateStatus();
+            _ = CheckUpdateAsync();
             Go(startPage != null && (pages.ContainsKey(startPage) || dynPages.ContainsKey(startPage)) ? startPage : "home");
             JumpLists.Update(S);
         };
@@ -85,12 +86,13 @@ public partial class MainWindow : Window
             if (it.group != group)
             {
                 group = it.group;
-                NavList.Children.Add(new TextBlock { Text = group.ToUpperInvariant(), Style = (Style)FindResource("Lbl"), FontSize = 9.5, Margin = new Thickness(13, NavList.Children.Count == 0 ? 2 : 13, 0, 6) });
+                NavList.Children.Add(new TextBlock { Text = group.ToUpperInvariant(), Style = (Style)FindResource("Lbl"), FontSize = 9.5, Margin = new Thickness(14, NavList.Children.Count == 0 ? 4 : 16, 0, 6) });
             }
             var row = new StackPanel { Orientation = Orientation.Horizontal };
-            var icon = Icons.Make(it.icon, 17);
-            icon.Margin = new Thickness(0, 0, 12, 0);
-            row.Children.Add(icon);
+            var no = new TextBlock { Text = (Array.IndexOf(NavItems, it) + 1).ToString("00"), Width = 30, FontSize = 10, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeights.Normal };
+            no.SetResourceReference(TextBlock.FontFamilyProperty, "MonoFont");
+            no.SetResourceReference(TextBlock.ForegroundProperty, "Dim");
+            row.Children.Add(no);
             row.Children.Add(new TextBlock { Text = it.label, VerticalAlignment = VerticalAlignment.Center });
             var rb = new RadioButton { Style = (Style)FindResource("Nav"), GroupName = "nav", Tag = it.key, Content = row };
             rb.Click += Nav_Click;
@@ -98,6 +100,20 @@ public partial class MainWindow : Window
         }
     }
 
+    async Task CheckUpdateAsync()
+    {
+        if (!S.AutoUpdate || Demo.On || (DateTime.UtcNow - S.LastUpdateCheck).TotalHours < 20) return;
+        S.LastUpdateCheck = DateTime.UtcNow;
+        SettingsStore.Save(S);
+        var r = await Updater.CheckAsync(S);
+        if (r == null) return;
+        if (MessageBox.Show(this, $"BrainStrap {r.Version} is out (you have {Installer.Version}).\n\n{r.Notes}\n\nUpdate now? It takes a few seconds and BrainStrap restarts.", "BrainStrap update", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes) return;
+        var problem = await Updater.ApplyAsync(r);
+        if (problem == null) Application.Current.Shutdown(0);
+        else MessageBox.Show(this, problem, "BrainStrap update");
+    }
+
+    void PlaySide_Click(object sender, RoutedEventArgs e) => Pages.HomePage.PlayRoblox();
     void Search_Click(object sender, RoutedEventArgs e) => new CommandPalette(this, Commands()).ShowDialog();
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
@@ -181,23 +197,13 @@ public partial class MainWindow : Window
                     var t = Themes.Effective(S);
                     Color C(string key) => ((SolidColorBrush)FindResource(key)).Color;
                     Color bg = (Color)ColorConverter.ConvertFromString(t.Bg), ink = C("Ink"), accent = C("Accent");
-                    BgLayer.Children.Add(new Silk(bg, ink, accent, t.Dark, st.SilkStrength));
+                    var (ga, gb) = Themes.Accents2(S);
+                    BgLayer.Children.Add(new Silk(bg, ink, ga, gb, t.Dark, st.SilkStrength));
                     var veil = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0) };
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(150, bg.R, bg.G, bg.B), 0));
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(105, bg.R, bg.G, bg.B), 0.62));
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(0, bg.R, bg.G, bg.B), 1));
                     BgLayer.Children.Add(new Border { Background = veil });
-                    foreach (var (size, x, y, alpha, secs) in new[] { (900.0, 520.0, -420.0, t.Dark ? 0.20 : 0.10, 26.0), (760.0, -360.0, 420.0, t.Dark ? 0.12 : 0.06, 34.0) })
-                    {
-                        var glow = new RadialGradientBrush();
-                        glow.GradientStops.Add(new GradientStop(Color.FromArgb((byte)(255 * alpha), accent.R, accent.G, accent.B), 0));
-                        glow.GradientStops.Add(new GradientStop(Color.FromArgb(0, accent.R, accent.G, accent.B), 1));
-                        var move = new TranslateTransform(x, y);
-                        var blob = new System.Windows.Shapes.Ellipse { Width = size, Height = size, Fill = glow, RenderTransform = move, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                        move.BeginAnimation(TranslateTransform.XProperty, new System.Windows.Media.Animation.DoubleAnimation(x, x + (x > 0 ? -90 : 90), TimeSpan.FromSeconds(secs))
-                            { AutoReverse = true, RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.SineEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut } });
-                        BgLayer.Children.Add(blob);
-                    }
                     break;
                 }
                 case "image" when File.Exists(st.BackgroundPath):
@@ -317,7 +323,8 @@ public partial class MainWindow : Window
     void ShowPage(string key)
     {
         current = key;
-        Crumb.Text = "BRAINSTRAP   /   " + (NavItems.FirstOrDefault(n => n.key == key).label ?? key).ToUpperInvariant();
+        var at = Array.FindIndex(NavItems, n => n.key == key);
+        Crumb.Text = (at >= 0 ? NavItems[at].label : key).ToUpperInvariant() + (at >= 0 ? $"      {at + 1:00} / {NavItems.Length:00}" : "");
         foreach (var kv in pages) kv.Value.Visibility = kv.Key == key ? Visibility.Visible : Visibility.Collapsed;
         if (dynPages.TryGetValue(key, out var build))
         {

@@ -14,7 +14,7 @@ internal static class Installer
         string.Equals(Path.GetFullPath(Paths.SelfExe), Path.GetFullPath(InstalledExe), StringComparison.OrdinalIgnoreCase);
 
     const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\BrainStrap";
-    public const string Version = "2.1.0";
+    public const string Version = "2.2.0";
 
     static string StartMenuLink => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "BrainStrap.lnk");
 

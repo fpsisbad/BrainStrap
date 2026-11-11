@@ -25,7 +25,7 @@ internal static class HomePage
     {
         var s = AppState.S;
         var hour = DateTime.Now.Hour;
-        var greet = hour < 5 ? "Late night session?" : hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening.";
+        var greet = hour < 5 ? "Still up." : hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening.";
         var page = Ui.Page("", "", out var body);
         var registered = ProtocolHandler.IsRegisteredToUs();
         var roblox = RobloxInstall.Newest();
@@ -39,18 +39,17 @@ internal static class HomePage
         if (!registered) actions.Add(Ui.IconPill("bolt", "Set up BrainStrap", () => { Installer.Install(s); host.Refresh(); }));
         else actions.Add(Ui.IconPill("play", roblox == null ? "Install and play Roblox" : "Play Roblox", () => PlayRoblox()));
         actions.Add(Ui.IconPill("spark", "Ask BrainAI", () => host.Go("brainai"), ghost: true));
-        actions.Add(Ui.IconPill("globe", "Find games", () => Ui.Open("https://www.roblox.com/discover"), ghost: true));
-        body.Children.Add(Ui.Hero($"{DateTime.Now:dddd d MMMM}  ·  {s.ActiveProfile} profile", greet, line,
-            Ui.PlayOrb(() => PlayRoblox(), roblox == null ? "Install and play Roblox" : "Play Roblox"), actions.ToArray()));
+        body.Children.Add(Ui.Hero($"{DateTime.Now:dddd d MMMM}   ·   {s.ActiveProfile} profile   ·   {(registered ? "active" : "not set up")}", greet, line, null, actions.ToArray()));
 
         // ── at a glance ──
         var week = History.Sessions().Where(r => r.Start > DateTime.Now.AddDays(-7)).ToList();
         var lastFps = History.Sessions().FirstOrDefault(r => r.Fps != null)?.Fps;
-        body.Children.Add(Ui.TileRow(
-            Ui.StatTile("shield", registered ? "Active" : "Not set up", registered ? "BrainStrap handles Play" : "Roblox's launcher handles Play", registered ? "Ok" : "Warn", () => host.Go("launch")),
-            Ui.StatTile("download", roblox == null ? "Not installed" : "Installed", roblox == null ? "BrainStrap will download it" : (RobloxInstall.IsOwn(roblox) ? "Roblox · managed by BrainStrap" : "Roblox · " + roblox.Name[..Math.Min(16, roblox.Name.Length)]), roblox == null ? "Warn" : "Ink", () => host.Go("launch")),
-            Ui.StatTile("flag", s.ActiveProfile, $"{flags} flag(s) · {s.GameProfiles.Count} game profile(s)" + (s.SafeMode ? " · safe mode" : ""), "Ink", () => host.Go("flags")),
-            Ui.StatTile("pulse", lastFps != null ? $"{lastFps.AvgFps:0} FPS" : week.Count > 0 ? $"{week.Sum(r => r.Minutes) / 60:0.0} h" : "—", lastFps != null ? "last measured session" : week.Count > 0 ? "played this week" : "no sessions yet", "Ink", () => host.Go("performance"))));
+        var rank = Rank.Get(s);
+        body.Children.Add(Ui.Readouts(
+            Ui.StatTile("pulse", lastFps != null ? $"{lastFps.AvgFps:0} fps" : "— ", "Last session", "Ink", () => host.Go("performance")),
+            Ui.StatTile("pulse", lastFps != null ? $"{lastFps.Low1:0} fps" : "— ", "One-percent low", "Ink", () => host.Go("performance")),
+            Ui.StatTile("clock", $"{week.Sum(r => r.Minutes) / 60:0.0} hours", "This week", "Ink", () => host.Go("life")),
+            Ui.StatTile("shield", $"{rank.Level} {rank.Title.ToLowerInvariant()}", "BrainRank", "Ink", () => host.Go("life"))));
 
         // ── getting started: shown until everything is ticked, or you hide it ──
         var steps = new (bool done, string title, string detail, string button, Action act)[]

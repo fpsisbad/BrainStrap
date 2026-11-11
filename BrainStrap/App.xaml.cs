@@ -105,6 +105,7 @@ public partial class App : Application
                 return;
             }
 
+            Updater.Tidy();
             try { BrainStrap.Core.Platform.Vault.Daily(s); } catch (Exception ex) { Logger.Warn("vault: " + ex.Message); }
             var win = new MainWindow(linkPage ?? Arg("--page"));
             MainWindow = win;

@@ -16,24 +16,25 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="252" />
+                <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- ───────── sidebar ───────── -->
             <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0">
-                <DockPanel Margin="14,16,14,14">
+                <DockPanel Margin="16,18,16,16">
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,2,0,18">
                         <Image Source="pack://application:,,,/Assets/brainstrap-mark.png" Width="32" Height="32"
                                RenderOptions.BitmapScalingMode="HighQuality" />
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="BrainStrap" FontSize="18" FontWeight="ExtraBold" />
+                            <TextBlock Text="BrainStrap" FontSize="27" FontFamily="{DynamicResource DisplayFont}" Margin="0,-4,0,-2" />
                             <TextBlock x:Name="SideVersion" Text="by rblx.brain" FontFamily="{DynamicResource MonoFont}" FontSize="9.5" Foreground="{DynamicResource Dim}" Margin="0,1,0,0" />
                         </StackPanel>
                     </StackPanel>
 
                     <!-- status card -->
-                    <Border DockPanel.Dock="Bottom" Background="{DynamicResource Pill}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="14" Padding="13,10" Margin="0,10,0,0">
+                    <Button DockPanel.Dock="Bottom" Style="{StaticResource PillButton}" Height="44" Margin="0,12,0,0" FontSize="14" Click="PlaySide_Click" Content="Play Roblox" />
+                    <Border DockPanel.Dock="Bottom" Background="Transparent" BorderBrush="{DynamicResource Line2}" BorderThickness="0,1,0,0" Padding="4,14,4,2" Margin="0,10,0,0">
                         <DockPanel>
                             <Grid DockPanel.Dock="Left" Width="10" Height="10" Margin="2,0,11,0" VerticalAlignment="Center">
                                 <Ellipse x:Name="SideHalo" Fill="{DynamicResource Ok}" Opacity="0.35" RenderTransformOrigin="0.5,0.5">

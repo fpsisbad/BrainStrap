@@ -572,7 +572,7 @@ internal sealed class CompanionWindow : Window
         var theme = Themes.Effective(AppState.S);
         Color Res(string key) => ((SolidColorBrush)Application.Current.FindResource(key)).Color;
         var back = new Canvas();
-        var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 0.8, 1.5, -0.8, 0.7);
+        var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), Res("Accent2"), theme.Dark, 0.8, 1.5, -0.8, 0.7);
         back.Children.Add(silk);
         var layers = new Grid();
         layers.SizeChanged += (_, _) => { silk.Width = layers.ActualWidth; silk.Height = layers.ActualHeight; };

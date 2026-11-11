@@ -199,7 +199,14 @@ internal static class LifePage
     public static FrameworkElement GameTile(MainWindow host, string placeId, string name, string sub)
     {
         var icon = new Image { Width = 64, Height = 64, Stretch = Stretch.UniformToFill };
-        var iconFrame = new Border { Width = 64, Height = 64, CornerRadius = new CornerRadius(12), ClipToBounds = true, Child = icon, Margin = new Thickness(0, 0, 12, 0) };
+        // the game's first letter shows until (or unless) its icon arrives
+        var letter = Ui.Text(name.Length > 0 ? name[..1].ToUpperInvariant() : "?", 26, "Dim", FontWeights.ExtraBold);
+        letter.HorizontalAlignment = HorizontalAlignment.Center;
+        letter.VerticalAlignment = VerticalAlignment.Center;
+        var iconGrid = new Grid();
+        iconGrid.Children.Add(letter);
+        iconGrid.Children.Add(icon);
+        var iconFrame = new Border { Width = 64, Height = 64, CornerRadius = new CornerRadius(12), ClipToBounds = true, Child = iconGrid, Margin = new Thickness(0, 0, 12, 0) };
         iconFrame.SetResourceReference(Border.BackgroundProperty, "Pill");
         var title = Ui.Title(name, 13.5);
         title.TextTrimming = TextTrimming.CharacterEllipsis;

@@ -38,7 +38,7 @@ internal static class ProtocolHandler
         return exe != null && Path.GetFileName(exe).Equals("BrainStrap.exe", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static bool IsRegisteredToUs() => IsBrainStrapCommand(CurrentCommand());
+    public static bool IsRegisteredToUs() => Demo.On || IsBrainStrapCommand(CurrentCommand());
 
     public static void Register(string exePath, Settings s)
     {

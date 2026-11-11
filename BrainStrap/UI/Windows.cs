@@ -46,7 +46,14 @@ internal sealed class LaunchSplash : Window
         var theme = Themes.Effective(s);
         Color Res(string key) => ((SolidColorBrush)Application.Current.FindResource(key)).Color;
         if (style == "silk")
-            layers.Children.Add(new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 1, 3.2, 1.9, -0.4));
+        {
+            // on a Canvas so the picture's own size never stretches the card
+            var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 1, 3.2, 1.9, -0.4);
+            var holder = new Canvas();
+            holder.Children.Add(silk);
+            layers.Children.Add(holder);
+            layers.SizeChanged += (_, _) => { silk.Width = layers.ActualWidth; silk.Height = layers.ActualHeight; };
+        }
         if (!string.IsNullOrEmpty(s.Studio.SplashImage) && File.Exists(s.Studio.SplashImage))
         {
             try
@@ -58,7 +65,7 @@ internal sealed class LaunchSplash : Window
             catch { }
         }
         // a veil so the text always reads, whatever is behind it
-        var veil = new Border { Opacity = style == "silk" ? 0.38 : 0 };
+        var veil = new Border { Opacity = style == "silk" ? 0.25 : 0 };
         veil.SetResourceReference(Border.BackgroundProperty, "Bg");
         layers.Children.Add(veil);
 

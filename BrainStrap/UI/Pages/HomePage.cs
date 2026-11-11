@@ -37,9 +37,11 @@ internal static class HomePage
             : "Roblox is installed and your setup is applied on every launch.";
         var actions = new List<UIElement>();
         if (!registered) actions.Add(Ui.IconPill("bolt", "Set up BrainStrap", () => { Installer.Install(s); host.Refresh(); }));
-        actions.Add(Ui.IconPill("play", roblox == null ? "Install and play Roblox" : "Play Roblox", () => PlayRoblox(), ghost: !registered));
+        else actions.Add(Ui.IconPill("play", roblox == null ? "Install and play Roblox" : "Play Roblox", () => PlayRoblox()));
         actions.Add(Ui.IconPill("spark", "Ask BrainAI", () => host.Go("brainai"), ghost: true));
-        body.Children.Add(Ui.Hero($"{DateTime.Now:dddd d MMMM}  ·  {s.ActiveProfile} profile", greet, line, actions.ToArray()));
+        actions.Add(Ui.IconPill("globe", "Find games", () => Ui.Open("https://www.roblox.com/discover"), ghost: true));
+        body.Children.Add(Ui.Hero($"{DateTime.Now:dddd d MMMM}  ·  {s.ActiveProfile} profile", greet, line,
+            Ui.PlayOrb(() => PlayRoblox(), roblox == null ? "Install and play Roblox" : "Play Roblox"), actions.ToArray()));
 
         // ── at a glance ──
         var week = History.Sessions().Where(r => r.Start > DateTime.Now.AddDays(-7)).ToList();
@@ -49,6 +51,27 @@ internal static class HomePage
             Ui.StatTile("download", roblox == null ? "Not installed" : "Installed", roblox == null ? "BrainStrap will download it" : (RobloxInstall.IsOwn(roblox) ? "Roblox · managed by BrainStrap" : "Roblox · " + roblox.Name[..Math.Min(16, roblox.Name.Length)]), roblox == null ? "Warn" : "Ink", () => host.Go("launch")),
             Ui.StatTile("flag", s.ActiveProfile, $"{flags} flag(s) · {s.GameProfiles.Count} game profile(s)" + (s.SafeMode ? " · safe mode" : ""), "Ink", () => host.Go("flags")),
             Ui.StatTile("pulse", lastFps != null ? $"{lastFps.AvgFps:0} FPS" : week.Count > 0 ? $"{week.Sum(r => r.Minutes) / 60:0.0} h" : "—", lastFps != null ? "last measured session" : week.Count > 0 ? "played this week" : "no sessions yet", "Ink", () => host.Go("performance"))));
+
+        // ── getting started: shown until everything is ticked, or you hide it ──
+        var steps = new (bool done, string title, string detail, string button, Action act)[]
+        {
+            (registered, "Make BrainStrap your launcher", "So the Play button on roblox.com opens BrainStrap.", "Set up", () => { Installer.Install(s); host.Refresh(); }),
+            (roblox != null, "Get Roblox", "BrainStrap downloads it from Roblox's own servers and keeps it updated.", "Install", () => host.Go("launch")),
+            (s.Profiles.Values.Any(p => p.Values.Count > 0), "Tune your graphics", "One click with BrainBoost, or pick a preset in BrainFlags.", "Run BrainBoost", () => host.Go("brainai")),
+            (s.Theme != "silk" || s.Accent != null || s.Platform.ActivePacks.Count > 0, "Make it yours", "Pick a theme in Studio or try a pack in BrainMods.", "Open BrainMods", () => host.Go("mods")),
+        };
+        var doneCount = steps.Count(x => x.done);
+        if (doneCount < steps.Length && !s.Studio.HiddenWidgets.Contains("start"))
+        {
+            var list = new StackPanel();
+            foreach (var st in steps)
+                list.Children.Add(Ui.Status(st.done ? "ok" : "info", st.title, st.done ? "Done" : st.detail, st.done ? null : Ui.Ghost(st.button, st.act)));
+            body.Children.Add(Ui.Card(
+                Ui.Head("check", $"Getting started · {doneCount} of {steps.Length}", "A minute of setup and BrainStrap is fully yours."),
+                Ui.Bar((double)doneCount / steps.Length),
+                list,
+                Ui.Buttons(Ui.Ghost("Hide this", () => { s.Studio.HiddenWidgets.Add("start"); AppState.Save("Hid getting started"); host.Refresh(); }))));
+        }
 
         foreach (var w in s.Studio.HomeWidgets.Where(w => !s.Studio.HiddenWidgets.Contains(w)))
         {

@@ -143,6 +143,7 @@ internal static class Ui
     {
         var t = new TextBox { Text = text, Style = Sty("Field"), Width = width };
         if (mono) t.FontFamily = (FontFamily)Application.Current.FindResource("MonoFont");
+        if (!double.IsNaN(width)) t.HorizontalAlignment = HorizontalAlignment.Left;
         return t;
     }
 
@@ -295,9 +296,9 @@ internal static class Ui
     }
 
     /// <summary>The big panel at the top of a page: a small label, a large headline, a line of text and the main actions.</summary>
-    public static Border Hero(string eyebrow, string title, string sub, params UIElement[] actions)
+    public static Border Hero(string eyebrow, string title, string sub, FrameworkElement? right, params UIElement[] actions)
     {
-        var sp = new StackPanel { Margin = new Thickness(0, 0, 210, 0) };
+        var sp = new StackPanel { Margin = new Thickness(0, 0, right != null ? 230 : 0, 0), VerticalAlignment = VerticalAlignment.Center };
         var eye = Lbl(eyebrow);
         eye.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         sp.Children.Add(eye);
@@ -317,21 +318,72 @@ internal static class Ui
             w.Margin = new Thickness(0, 22, 0, 0);
             sp.Children.Add(w);
         }
-        // the mark, large and faint, sits behind the right-hand side
-        var mark = new Image
-        {
-            Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/brainstrap-mark.png")),
-            Width = 250, Height = 250, Opacity = 0.11, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, -60, -50, -60),
-            IsHitTestVisible = false, RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new RotateTransform(-10),
-        };
-        RenderOptions.SetBitmapScalingMode(mark, BitmapScalingMode.HighQuality);
-        var grid = new Grid { ClipToBounds = true };
-        grid.Children.Add(mark);
+        var grid = new Grid();
         grid.Children.Add(sp);
+        if (right != null)
+        {
+            right.HorizontalAlignment = HorizontalAlignment.Right;
+            right.VerticalAlignment = VerticalAlignment.Center;
+            grid.Children.Add(right);
+        }
         var card = new Border { CornerRadius = new CornerRadius(26), Padding = new Thickness(34, 32, 34, 32), Margin = new Thickness(0, 4, 0, 16), BorderThickness = new Thickness(1), Child = grid, ClipToBounds = true };
         card.SetResourceReference(Border.BackgroundProperty, "HeroBrush");
         card.SetResourceReference(Border.BorderBrushProperty, "CardLineHover");
         return card;
+    }
+
+    /// <summary>The big round Play button: rings around it, one of them slowly turning, and a halo that breathes.</summary>
+    public static FrameworkElement PlayOrb(Action click, string tip)
+    {
+        var g = new Grid { Width = 200, Height = 200, Margin = new Thickness(0, -6, 4, -6) };
+        Ellipse Ring(double size, string brush, double opacity, DoubleCollection? dash = null)
+        {
+            var e = new Ellipse { Width = size, Height = size, StrokeThickness = 1, Opacity = opacity, StrokeDashArray = dash, RenderTransformOrigin = new Point(0.5, 0.5) };
+            e.SetResourceReference(Shape.StrokeProperty, brush);
+            return e;
+        }
+        g.Children.Add(Ring(200, "Line2", 0.6));
+        var turning = Ring(168, "Muted", 0.7, new DoubleCollection { 1, 9 });
+        var spin = new RotateTransform();
+        turning.RenderTransform = spin;
+        spin.BeginAnimation(RotateTransform.AngleProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 360, TimeSpan.FromSeconds(48)) { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever });
+        g.Children.Add(turning);
+        g.Children.Add(Ring(136, "Line2", 1));
+
+        var accent = ((SolidColorBrush)Application.Current.FindResource("Accent")).Color;
+        var glow = new RadialGradientBrush();
+        glow.GradientStops.Add(new GradientStop(Color.FromArgb(110, accent.R, accent.G, accent.B), 0.35));
+        glow.GradientStops.Add(new GradientStop(Color.FromArgb(0, accent.R, accent.G, accent.B), 1));
+        var halo = new Ellipse { Width = 170, Height = 170, Fill = glow, RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new ScaleTransform(1, 1), IsHitTestVisible = false };
+        var breathe = new System.Windows.Media.Animation.DoubleAnimation(0.86, 1.12, TimeSpan.FromSeconds(2.4))
+            { AutoReverse = true, RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever, EasingFunction = new System.Windows.Media.Animation.SineEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut } };
+        ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleXProperty, breathe);
+        ((ScaleTransform)halo.RenderTransform).BeginAnimation(ScaleTransform.ScaleYProperty, breathe);
+        g.Children.Add(halo);
+
+        var tri = new System.Windows.Shapes.Path { Data = Geometry.Parse("M9 5.5 L20 12 L9 18.5 Z"), Width = 24, Height = 24, StrokeLineJoin = PenLineJoin.Round, StrokeThickness = 2 };
+        tri.SetResourceReference(Shape.FillProperty, "AccentInk");
+        tri.SetResourceReference(Shape.StrokeProperty, "AccentInk");
+        var b = new Button { Style = Sty("OrbButton"), Width = 96, Height = 96, ToolTip = tip, Content = new Viewbox { Width = 38, Height = 38, Child = new Canvas { Width = 24, Height = 24, Children = { tri } } } };
+        b.Click += (_, _) => Guard(click);
+        g.Children.Add(b);
+        return g;
+    }
+
+    /// <summary>A thin progress bar (0..1) in the accent colour.</summary>
+    public static FrameworkElement Bar(double fraction, double height = 6)
+    {
+        var g = new Grid { Height = height, Margin = new Thickness(0, 4, 0, 14) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Clamp(fraction, 0.001, 1), GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Clamp(1 - fraction, 0.001, 1), GridUnitType.Star) });
+        var track = new Border { CornerRadius = new CornerRadius(height / 2) };
+        track.SetResourceReference(Border.BackgroundProperty, "Pill");
+        Grid.SetColumnSpan(track, 2);
+        var fill = new Border { CornerRadius = new CornerRadius(height / 2) };
+        fill.SetResourceReference(Border.BackgroundProperty, "Accent");
+        g.Children.Add(track);
+        g.Children.Add(fill);
+        return g;
     }
 
     /// <summary>A pill button with an icon in front of the text.</summary>
@@ -447,6 +499,7 @@ internal sealed class DarkCombo : Button
     {
         Style = (Style)Application.Current.FindResource("GhostButton");
         Margin = new Thickness(0);
+        HorizontalAlignment = HorizontalAlignment.Left;
         var row = new DockPanel();
         var arrow = new TextBlock { Text = "▾", Margin = new Thickness(10, 0, 0, 0), Opacity = 0.7 };
         DockPanel.SetDock(arrow, Dock.Right);

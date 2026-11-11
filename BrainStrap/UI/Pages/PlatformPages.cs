@@ -564,25 +564,41 @@ internal sealed class CompanionWindow : Window
     public CompanionWindow()
     {
         Title = "BrainCompanion";
-        Width = 520; Height = 380;
+        Width = 560; Height = 470;
         SetResourceReference(BackgroundProperty, "Bg");
         SetResourceReference(ForegroundProperty, "Ink");
         FontFamily = (FontFamily)Application.Current.FindResource("UiFont");
         var root = new StackPanel { Margin = new Thickness(28) };
-        Content = root;
+        var theme = Themes.Effective(AppState.S);
+        Color Res(string key) => ((SolidColorBrush)Application.Current.FindResource(key)).Color;
+        var back = new Canvas();
+        var silk = new Silk((Color)ColorConverter.ConvertFromString(theme.Bg), Res("Ink"), Res("Accent"), theme.Dark, 0.8, 1.5, -0.8, 0.7);
+        back.Children.Add(silk);
+        var layers = new Grid();
+        layers.SizeChanged += (_, _) => { silk.Width = layers.ActualWidth; silk.Height = layers.ActualHeight; };
+        layers.Children.Add(back);
+        layers.Children.Add(root);
+        Content = layers;
         var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         void Draw()
         {
             root.Children.Clear();
             var live = BrainStrap.Core.Perf.History.ReadLive();
             root.Children.Add(Ui.Lbl("BrainCompanion · live"));
-            if (live == null) { root.Children.Add(Ui.Big("Waiting for Roblox…", "Muted")); root.Children.Add(Ui.Small("Start a game and this fills in.")); return; }
-            root.Children.Add(Ui.Title(live.GameName ?? "Roblox", 18));
-            root.Children.Add(Ui.Cols(2,
-                Ui.Stat(live.Measuring && live.Fps > 0 ? $"{live.Fps:0}" : "—", "FPS"),
-                Ui.Stat(live.Ping is { Samples: > 0 } p && p.LossPct < 100 ? $"{p.Avg:0} ms" : "—", "ping"),
-                Ui.Stat(live.Hw != null ? $"{live.Hw.CpuPct:0}% / {live.Hw.GpuPct:0}%" : "—", "CPU / GPU"),
-                Ui.Stat($"{(DateTime.UtcNow - live.Started).TotalMinutes:0} min", "session")));
+            if (live == null)
+            {
+                root.Children.Add(Ui.Text("Waiting for Roblox…", 30, "Ink", FontWeights.ExtraBold));
+                root.Children.Add(Ui.Small("Start a game and this fills in: FPS, ping, CPU, GPU and session time.", 6));
+                return;
+            }
+            root.Children.Add(Ui.Text(live.GameName ?? "Roblox", 24, "Ink", FontWeights.ExtraBold));
+            root.Children.Add(new Border { Height = 16 });
+            root.Children.Add(Ui.TileRow(
+                Ui.StatTile("pulse", live.Measuring && live.Fps > 0 ? $"{live.Fps:0}" : "—", "FPS"),
+                Ui.StatTile("globe", live.Ping is { Samples: > 0 } p && p.LossPct < 100 ? $"{p.Avg:0} ms" : "—", "ping")));
+            root.Children.Add(Ui.TileRow(
+                Ui.StatTile("cpu", live.Hw != null ? $"{live.Hw.CpuPct:0}% / {live.Hw.GpuPct:0}%" : "—", "CPU / GPU"),
+                Ui.StatTile("clock", $"{(DateTime.UtcNow - live.Started).TotalMinutes:0} min", "session")));
         }
         timer.Tick += (_, _) => Draw();
         Loaded += (_, _) => { Draw(); timer.Start(); };

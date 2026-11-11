@@ -265,6 +265,7 @@ internal static class SettingsStore
 
     public static void Save(Settings s)
     {
+        if (Demo.On) return;    // the screenshot mode never writes anything
         try
         {
             var tmp = Paths.SettingsFile + ".tmp";

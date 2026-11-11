@@ -181,6 +181,7 @@ internal static class History
 
     public static List<SessionRecord> Sessions()
     {
+        if (Demo.On) return Demo.Sessions();
         var list = new List<SessionRecord>();
         try
         {

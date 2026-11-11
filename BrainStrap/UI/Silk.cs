@@ -36,9 +36,9 @@ internal sealed class Silk : Image
             var tint = i[c] * 0.62f + a[c] * 0.38f;
             if (dark)
             {
-                lo[c] = b[c] * 0.42f;                              // deep folds
-                hi[c] = b[c] + (tint - b[c]) * 0.40f * k;          // lit cloth
-                sh[c] = tint * 0.58f * k;                          // the sheen along a fold
+                lo[c] = b[c] * 0.50f;                              // deep folds
+                hi[c] = b[c] + (tint - b[c]) * 0.25f * k;          // lit cloth
+                sh[c] = tint * 0.30f * k;                          // the sheen along a fold
             }
             else
             {

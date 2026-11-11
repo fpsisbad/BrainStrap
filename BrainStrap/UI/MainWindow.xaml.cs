@@ -147,8 +147,21 @@ public partial class MainWindow : Window
     void Arrive()
     {
         var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
-        PageHost.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240)) { EasingFunction = ease });
-        if (PageHost.RenderTransform is TranslateTransform tt)
+        PageHost.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease });
+        // the cards arrive one after another
+        if (DynHost.Visibility == Visibility.Visible && DynHost.Content is ScrollViewer { Content: Panel body })
+        {
+            var i = 0;
+            foreach (var child in body.Children.OfType<FrameworkElement>().Take(14))
+            {
+                var move = new TranslateTransform(0, 22);
+                child.RenderTransform = move;
+                var begin = TimeSpan.FromMilliseconds(45 * i++);
+                move.BeginAnimation(TranslateTransform.YProperty, new System.Windows.Media.Animation.DoubleAnimation(22, 0, TimeSpan.FromMilliseconds(420)) { BeginTime = begin, EasingFunction = ease });
+                child.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(320)) { BeginTime = begin, EasingFunction = ease });
+            }
+        }
+        else if (PageHost.RenderTransform is TranslateTransform tt)
             tt.BeginAnimation(TranslateTransform.YProperty, new System.Windows.Media.Animation.DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = ease });
     }
 

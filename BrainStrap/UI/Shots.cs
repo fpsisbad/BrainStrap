@@ -17,6 +17,15 @@ internal static class Shots
         var log = new StringBuilder();
         try
         {
+            // 1) the very first run, exactly as a new user sees it
+            var first = new MainWindow("home") { WindowStartupLocation = WindowStartupLocation.Manual, Left = 0, Top = 0, ShowInTaskbar = false };
+            first.Show();
+            await Task.Delay(2200);
+            Save(first, Path.Combine(dir, "first-home.png"));
+            first.Close();
+
+            // 2) every page with sample data, so the pictures show the app in use
+            BrainStrap.Core.Demo.Dress(BrainStrap.Core.AppState.S);
             var win = new MainWindow("home") { WindowStartupLocation = WindowStartupLocation.Manual, Left = 0, Top = 0, ShowInTaskbar = false };
             win.Show();
             await Task.Delay(1800);
@@ -84,7 +93,16 @@ internal static class Shots
         rtb.Render(dv);
         var enc = new PngBitmapEncoder();
         enc.Frames.Add(BitmapFrame.Create(rtb));
-        using var f = File.Create(path);
-        enc.Save(f);
+        using (var f = File.Create(path)) enc.Save(f);
+        // a lighter copy for the website
+        var name = Path.GetFileNameWithoutExtension(path);
+        if (name.Length > 3 && char.IsDigit(name[0]))
+        {
+            var web = Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(path)!, "web")).FullName;
+            var jpg = new JpegBitmapEncoder { QualityLevel = 90 };
+            jpg.Frames.Add(BitmapFrame.Create(rtb));
+            using var j = File.Create(Path.Combine(web, name[3..] + ".jpg"));
+            jpg.Save(j);
+        }
     }
 }

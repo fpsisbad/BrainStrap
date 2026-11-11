@@ -20,6 +20,7 @@ internal static class RobloxInstall
     /// <summary>All installed player versions, newest first.</summary>
     public static List<InstalledVersion> List()
     {
+        if (Demo.On) return new List<InstalledVersion> { Demo.Roblox };
         var list = new List<InstalledVersion>();
         foreach (var root in new[] { RobloxDeploy.Root, Paths.RobloxVersions, Paths.RobloxVersionsMachine })
         {

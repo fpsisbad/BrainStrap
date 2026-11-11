@@ -47,10 +47,10 @@ public partial class App : Application
             }
 
             // 1') a roblox:// join link
-            var link = args.FirstOrDefault(a => a.StartsWith("roblox:", StringComparison.OrdinalIgnoreCase));
-            if (link != null)
+            var joinLink = args.FirstOrDefault(a => a.StartsWith("roblox:", StringComparison.OrdinalIgnoreCase));
+            if (joinLink != null)
             {
-                Shutdown(await Launcher.RunLinkAsync(link));
+                Shutdown(await Launcher.RunLinkAsync(joinLink));
                 return;
             }
 

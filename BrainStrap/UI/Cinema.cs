@@ -62,14 +62,17 @@ internal static class Cinema
     public static FrameworkElement Stage(IReadOnlyList<Card> cards, double height = 420)
     {
         var vp = new Viewport3D { Height = height, ClipToBounds = false, Cursor = Cursors.Hand, Margin = new Thickness(0, -10, 0, 0) };
-        var cam = new PerspectiveCamera(new Point3D(0, 0.55, 9.5), new Vector3D(0, -0.07, -1), new Vector3D(0, 1, 0), 38);
+        var cam = new PerspectiveCamera(new Point3D(0, 0.9, 14), new Vector3D(0, -0.07, -1), new Vector3D(0, 1, 0), 36);
         vp.Camera = cam;
         var world = new Model3DGroup();
         world.Children.Add(new AmbientLight(Color.FromRgb(70, 70, 76)));
         world.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-0.15, -0.1, -1)));
         var ring = new Model3DGroup();
         var spin = new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0);
-        ring.Transform = new RotateTransform3D(spin);
+        var ringT = new Transform3DGroup();
+        ringT.Children.Add(new RotateTransform3D(spin));
+        ringT.Children.Add(new TranslateTransform3D(0, 0.55, 0));
+        ring.Transform = ringT;
         world.Children.Add(ring);
 
         var n = cards.Count;
@@ -111,8 +114,8 @@ internal static class Cinema
 
         // a slow turn, a camera that settles in when the page opens, and a lean toward the mouse
         spin.BeginAnimation(AxisAngleRotation3D.AngleProperty, new DoubleAnimation(0, -360, TimeSpan.FromSeconds(Math.Max(46, n * 9))) { RepeatBehavior = RepeatBehavior.Forever });
-        var settle = new Point3DAnimation(new Point3D(0, 1.4, 14), new Point3D(0, 0.55, 9.5), TimeSpan.FromMilliseconds(1600)) { EasingFunction = new QuinticEase { EasingMode = EasingMode.EaseOut } };
-        cam.BeginAnimation(ProjectionCamera.PositionProperty, settle);
+        if (!Demo.On)
+            cam.BeginAnimation(ProjectionCamera.PositionProperty, new Point3DAnimation(new Point3D(0, 2.2, 20), new Point3D(0, 0.9, 14), TimeSpan.FromMilliseconds(1600)) { EasingFunction = new QuinticEase { EasingMode = EasingMode.EaseOut } });
         Point target = default, now = default;
         vp.MouseMove += (_, e) =>
         {
@@ -286,9 +289,9 @@ internal static class Cinema
         rg.GradientStops.Add(new GradientStop(Color.FromArgb(0, color.R, color.G, color.B), 1));
         bloom.Fill = rg;
         grid.Children.Add(bloom);
-        grid.Children.Add(Streak(14, 40, 1500));
-        grid.Children.Add(Streak(3, 150, 1100));
-        var core = new System.Windows.Shapes.Ellipse { Width = 16, Height = 10, Fill = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        grid.Children.Add(Streak(14, 26, 1500));
+        grid.Children.Add(Streak(3, 95, 1100));
+        var core = new System.Windows.Shapes.Ellipse { Width = 16, Height = 10, Fill = new SolidColorBrush(Color.FromArgb(150, 255, 255, 255)), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         grid.Children.Add(core);
         var move = new TranslateTransform(x, y);
         grid.RenderTransform = move;

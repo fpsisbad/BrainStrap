@@ -279,6 +279,7 @@
 
     <!-- a readout that can be clicked: no chrome, the label brightens -->
     <Style x:Key="ReadoutButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />

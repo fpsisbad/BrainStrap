@@ -207,7 +207,7 @@ public partial class MainWindow : Window
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(105, bg.R, bg.G, bg.B), 0.62));
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(0, bg.R, bg.G, bg.B), 1));
                     BgLayer.Children.Add(new Border { Background = veil });
-                    if (t.Dark) BgLayer.Children.Add(Cinema.Flare(gb, -300, 330));
+                    if (t.Dark) BgLayer.Children.Add(Cinema.Flare(gb, -400, 420));
                     break;
                 }
                 case "image" when File.Exists(st.BackgroundPath):

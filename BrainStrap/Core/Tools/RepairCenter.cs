@@ -16,7 +16,7 @@ internal static class RepairCenter
         var installed = RobloxInstall.Newest();
         if (installed == null)
         {
-            list.Add(new Check("Roblox is not installed", "Install it once from roblox.com, then press Play.", "bad", "Open roblox.com/download", () => { Open("https://www.roblox.com/download"); return "Opened the download page."; }));
+            list.Add(new Check("Roblox is not installed", "Press Play Roblox on the Home page and BrainStrap downloads it.", "bad", "Open roblox.com/download", () => { Open("https://www.roblox.com/download"); return "Opened the download page."; }));
             return list;
         }
         list.Add(new Check("Roblox player found", installed.Name, "ok"));
@@ -31,10 +31,10 @@ internal static class RepairCenter
         else list.Add(new Check("Play button opens Roblox's own launcher", "Your BrainStrap settings won't apply when launching from the website.", "warn", "Register BrainStrap",
             () => { Installer.Install(s); return "Registered."; }));
 
-        using (var k = Registry.ClassesRoot.OpenSubKey(@"roblox\shell\open\command"))
-            list.Add(k == null
-                ? new Check("roblox:// links not registered", "Server joins from BrainStrap need Roblox's own link handler. Reinstalling Roblox restores it.", "warn", "Open roblox.com/download", () => { Open("https://www.roblox.com/download"); return "Opened."; })
-                : new Check("roblox:// links work", "Used for joining servers from BrainStrap.", "ok"));
+        list.Add(ProtocolHandler.IsBrainStrapCommand(ProtocolHandler.CurrentLinkCommand())
+            ? new Check("roblox:// join links open BrainStrap", "Used for joining servers and for Quick Play.", "ok")
+            : new Check("roblox:// join links don't open BrainStrap", "Joining still works from BrainStrap's own buttons. Registering makes links from other places use your setup too.", "warn", "Register BrainStrap",
+                () => { Installer.Install(s); return "Registered."; }));
 
         var flagsFile = FlagWriter.FlagsPath(installed.Folder);
         if (File.Exists(flagsFile))

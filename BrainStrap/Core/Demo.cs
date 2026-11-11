@@ -25,6 +25,7 @@ internal static class Demo
         s.ActiveProfile = "Balanced";
         s.GameProfiles[Games[2].id] = "Competitive";
         s.Hud.Enabled = true;
+        if (!s.Studio.HiddenWidgets.Contains("start")) s.Studio.HiddenWidgets.Add("start");
         s.Platform.Flows.Clear();
         s.Platform.Flows.Add(new FlowRule { Name = "Launch setup", Trigger = "launch", Actions = { new FlowAction { Type = "profile.switch", Value = "Balanced" }, new FlowAction { Type = "tracking.start" } } });
         s.Platform.Flows.Add(new FlowRule { Name = "Bedwars night", Trigger = "join", TriggerValue = "bedwars", Actions = { new FlowAction { Type = "profile.switch", Value = "Competitive" }, new FlowAction { Type = "hud.on" }, new FlowAction { Type = "app.start", Value = "discord" } } });

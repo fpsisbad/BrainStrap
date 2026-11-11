@@ -75,6 +75,18 @@ internal static class Launcher
         return await LaunchAsync(req.BuildArgs(), req.PlaceId, uri);
     }
 
+    /// <summary>A roblox:// link (joining a game or a server). The official player accepts the link as its argument.</summary>
+    public static Task<int> RunLinkAsync(string uri)
+    {
+        if (uri.Length > 2000 || !System.Text.RegularExpressions.Regex.IsMatch(uri, @"^roblox://[A-Za-z0-9\-._~/?=&%:+@,;!*'()]*$"))
+        {
+            Logger.Warn("ignored a roblox:// link with unexpected characters");
+            return Task.FromResult(2);
+        }
+        var m = System.Text.RegularExpressions.Regex.Match(uri, @"[?&]placeId=(\d{1,20})", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return LaunchAsync(new List<string> { uri }, m.Success ? m.Groups[1].Value : null, uri);
+    }
+
     /// <summary>"Play Roblox" inside BrainStrap: opens the Roblox app itself, with your setup applied.</summary>
     public static Task<int> RunAppAsync() => LaunchAsync(new List<string> { "--app" }, null, null);
 

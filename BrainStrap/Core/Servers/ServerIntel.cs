@@ -208,22 +208,19 @@ internal static class JoinLinks
         return null;
     }
 
-    /// <summary>Applies the right profile and mods for the place, opens Roblox, and starts a background session watcher.</summary>
+    /// <summary>
+    /// Joins through BrainStrap's own launch flow: a second copy of BrainStrap makes sure Roblox is installed and current,
+    /// applies the right profile for the place, starts the player with the join link and follows the session.
+    /// Private-server share links are web pages, so those open in the browser and come back through the Play button.
+    /// </summary>
     public static void Join(string placeId, string? jobId, string? httpsLink = null)
     {
-        var s = AppState.S;
-        try { Launcher.Prepare(s, placeId); } catch (Exception ex) { Logger.Error("prepare failed", ex); }
-        var target = httpsLink ?? App(placeId, jobId);
-        try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); }
-        catch (Exception ex) { Logger.Error("could not open the join link", ex); return; }
         try
         {
-            Process.Start(new ProcessStartInfo(Paths.SelfExe) { UseShellExecute = false, ArgumentList = { "--watch", placeId } });
+            if (httpsLink != null) { Process.Start(new ProcessStartInfo(httpsLink) { UseShellExecute = true }); return; }
+            Process.Start(new ProcessStartInfo(Paths.SelfExe) { UseShellExecute = false, ArgumentList = { App(placeId, jobId) } });
         }
-        catch (Exception ex)
-        {
-            Logger.Warn("could not start the session watcher: " + ex.Message);
-        }
+        catch (Exception ex) { Logger.Error("could not open the join link", ex); }
     }
 }
 

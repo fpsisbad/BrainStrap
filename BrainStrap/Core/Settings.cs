@@ -193,6 +193,7 @@ internal sealed class Settings
     public TuningSettings Tuning { get; set; } = new();
 
     public string? OriginalHandlerCommand { get; set; }
+    public string? OriginalLinkCommand { get; set; }
 
     [JsonIgnore]
     public FlagProfile Current => Profiles.TryGetValue(ActiveProfile, out var p) ? p : Profiles["Default"];

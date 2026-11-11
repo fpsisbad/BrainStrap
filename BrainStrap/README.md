@@ -15,6 +15,15 @@ A Roblox launcher for Windows in the RBLX.BRAIN style, with 60 features across s
 | **Advanced Tools** | ⭐BrainProfiles, Profile Auto Selection, Safe FastFlag Editor, FastFlag Validator, Settings Timeline, Instant Rollback, Roblox Repair Center, Cache Manager, Update Inspector, Crash Report Analyzer | Tools and Graphics pages, plus the launch screen |
 | **BrainLife** | ⭐BrainHUD, Game Library, Taskbar Jump List, Battery-Aware Profiles, Game Mode+, Companion Apps, Screenshot Gallery, Playtime Journal, Backup & Restore, Command Palette (Ctrl+K) | BrainLife page and Home |
 
+## New in 2.1: independent, and a new look
+
+- **BrainStrap is the whole launcher.** `Core/RobloxDeploy.cs` downloads the official, unmodified Roblox player from Roblox's own download servers, checks every package against the MD5 in Roblox's manifest, unpacks it into `%LOCALAPPDATA%\BrainStrap\Roblox\Versions` and keeps it updated. No Roblox launcher and no other bootstrapper is needed. If Roblox adds a package this version doesn't know, or a download fails, it falls back to the Roblox that is already installed (or Roblox's own launcher when there is one). The switch is Launch → "BrainStrap installs and updates Roblox itself".
+- **roblox:// join links** are handled by BrainStrap too, so Quick Play and server joins work on a PC that has never had Roblox's launcher.
+- **The interface was rebuilt**: its own title bar, a live silk backdrop (`UI/Silk.cs`, the website's shader worked out on the processor), glass cards, line icons (`UI/Icons.cs`), bundled Manrope and JetBrains Mono (SIL Open Font License, texts in `Assets/Fonts`), a Home page with a Play button, and motion throughout.
+- **BrainSight** (BrainLife page): a crosshair overlay in BrainStrap's own click-through window, shown only while Roblox is in front.
+- **Windows tuning** (Launch page): the high-performance GPU preference and the "disable fullscreen optimisations" compatibility switch, written exactly where Windows Settings writes them and removed again when switched off.
+- **`BrainStrap.exe --shots <folder>`** saves a picture of every page with sample data. The build runs it and publishes the pictures to the `ci-shots` branch; the website shows those real screenshots.
+
 ## The four pillars (new in this version)
 
 | Pillar | What it is | In the app |

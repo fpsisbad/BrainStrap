@@ -182,6 +182,11 @@ public partial class MainWindow : Window
                     Color C(string key) => ((SolidColorBrush)FindResource(key)).Color;
                     Color bg = (Color)ColorConverter.ConvertFromString(t.Bg), ink = C("Ink"), accent = C("Accent");
                     BgLayer.Children.Add(new Silk(bg, ink, accent, t.Dark, st.SilkStrength));
+                    var veil = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0) };
+                    veil.GradientStops.Add(new GradientStop(Color.FromArgb(150, bg.R, bg.G, bg.B), 0));
+                    veil.GradientStops.Add(new GradientStop(Color.FromArgb(105, bg.R, bg.G, bg.B), 0.62));
+                    veil.GradientStops.Add(new GradientStop(Color.FromArgb(0, bg.R, bg.G, bg.B), 1));
+                    BgLayer.Children.Add(new Border { Background = veil });
                     foreach (var (size, x, y, alpha, secs) in new[] { (900.0, 520.0, -420.0, t.Dark ? 0.20 : 0.10, 26.0), (760.0, -360.0, 420.0, t.Dark ? 0.12 : 0.06, 34.0) })
                     {
                         var glow = new RadialGradientBrush();

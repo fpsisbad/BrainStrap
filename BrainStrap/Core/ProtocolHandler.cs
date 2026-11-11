@@ -40,6 +40,15 @@ internal static class ProtocolHandler
 
     public static bool IsRegisteredToUs() => Demo.On || IsBrainStrapCommand(CurrentCommand());
 
+    const string LinkKeyPath = @"Software\Classes\roblox";
+
+    /// <summary>The command Windows runs for roblox:// links (joining a server from a link or from BrainStrap).</summary>
+    public static string? CurrentLinkCommand()
+    {
+        using var k = Registry.ClassesRoot.OpenSubKey(@"roblox\shell\open\command");
+        return k?.GetValue(null) as string;
+    }
+
     public static void Register(string exePath, Settings s)
     {
         var current = CurrentCommand();
@@ -48,29 +57,43 @@ internal static class ProtocolHandler
             s.OriginalHandlerCommand = current;          // remember what Roblox registered
             Logger.Info("saved the original roblox-player handler");
         }
+        var link = CurrentLinkCommand();
+        if (!string.IsNullOrWhiteSpace(link) && !IsBrainStrapCommand(link)) s.OriginalLinkCommand = link;
 
-        using var root = Registry.CurrentUser.CreateSubKey(KeyPath);
-        root.SetValue(null, "URL:Roblox Protocol (BrainStrap)");
+        Write(KeyPath, "URL:Roblox Protocol (BrainStrap)", exePath);
+        // roblox:// join links too, so joining works on a PC that has never had Roblox's own launcher
+        Write(LinkKeyPath, "URL:Roblox Link (BrainStrap)", exePath);
+        Logger.Info("registered as the roblox-player and roblox link handler");
+    }
+
+    static void Write(string keyPath, string name, string exePath)
+    {
+        using var root = Registry.CurrentUser.CreateSubKey(keyPath);
+        root.SetValue(null, name);
         root.SetValue("URL Protocol", "");
         using (var icon = root.CreateSubKey("DefaultIcon")) icon.SetValue(null, $"\"{exePath}\",0");
         using (var cmd = root.CreateSubKey(@"shell\open\command")) cmd.SetValue(null, $"\"{exePath}\" \"%1\"");
-        Logger.Info("registered as the roblox-player handler");
     }
 
-    /// <summary>Puts Roblox's own launcher back. If its file is gone, the BrainStrap key is simply removed.</summary>
+    /// <summary>Puts Roblox's own launcher back. If its file is gone, the BrainStrap keys are simply removed.</summary>
     public static void Restore(Settings s)
     {
-        var exe = ExtractExe(s.OriginalHandlerCommand);
-        if (exe != null && File.Exists(exe) && !IsBrainStrapCommand(s.OriginalHandlerCommand))
+        Undo(KeyPath, s.OriginalHandlerCommand);
+        Undo(LinkKeyPath, s.OriginalLinkCommand);
+        Logger.Info("gave the Roblox links back");
+    }
+
+    static void Undo(string keyPath, string? original)
+    {
+        var exe = ExtractExe(original);
+        if (exe != null && File.Exists(exe) && !IsBrainStrapCommand(original))
         {
-            using var cmd = Registry.CurrentUser.CreateSubKey(KeyPath + @"\shell\open\command");
-            cmd.SetValue(null, s.OriginalHandlerCommand!);
-            Logger.Info("restored the original roblox-player handler");
+            using var cmd = Registry.CurrentUser.CreateSubKey(keyPath + @"\shell\open\command");
+            cmd.SetValue(null, original!);
         }
         else
         {
-            try { Registry.CurrentUser.DeleteSubKeyTree(KeyPath, false); } catch { }
-            Logger.Info("removed the BrainStrap roblox-player registration");
+            try { Registry.CurrentUser.DeleteSubKeyTree(keyPath, false); } catch { }
         }
     }
 }

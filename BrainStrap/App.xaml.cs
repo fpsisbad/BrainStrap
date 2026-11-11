@@ -46,6 +46,14 @@ public partial class App : Application
                 return;
             }
 
+            // 1') a roblox:// join link
+            var link = args.FirstOrDefault(a => a.StartsWith("roblox:", StringComparison.OrdinalIgnoreCase));
+            if (link != null)
+            {
+                Shutdown(await Launcher.RunLinkAsync(link));
+                return;
+            }
+
             // 1a) "Play Roblox" from inside BrainStrap, the Start menu or the Jump List
             if (args.Any(a => a.Equals("--roblox", StringComparison.OrdinalIgnoreCase)))
             {
@@ -75,10 +83,7 @@ public partial class App : Application
             if (Arg("--play") is { } playId && RobloxApi.IsId(playId))
             {
                 var job = Arg("--play", 2);
-                try { Launcher.Prepare(s, playId); } catch (Exception ex) { Logger.Warn("prepare: " + ex.Message); }
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(JoinLinks.App(playId, RobloxApi.IsJobId(job) ? job : null)) { UseShellExecute = true });
-                if (Session.Wanted(s)) await Session.WatchAsync(playId);
-                Shutdown(0);
+                Shutdown(await Launcher.RunLinkAsync(JoinLinks.App(playId, RobloxApi.IsJobId(job) ? job : null)));
                 return;
             }
 

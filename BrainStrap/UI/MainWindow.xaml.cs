@@ -51,6 +51,7 @@ public partial class MainWindow : Window
         {
             LoadControls();
             ApplyBackground();
+            if (!S.Studio.Minimal) { FxLayer.Children.Add(Cinema.Vignette(0.5)); FxLayer.Children.Add(Cinema.Grain(0.045)); }
             UpdateStatus();
             _ = CheckUpdateAsync();
             Go(startPage != null && (pages.ContainsKey(startPage) || dynPages.ContainsKey(startPage)) ? startPage : "home");
@@ -145,8 +146,10 @@ public partial class MainWindow : Window
         foreach (var child in NavList.Children.OfType<RadioButton>())
             child.IsChecked = (string)child.Tag == key;
         var changed = key != current;
+        var snap = changed && IsLoaded && !S.Studio.Minimal ? Cinema.Snap(PageHost) : null;
         ShowPage(key);
-        if (changed) Arrive();
+        if (snap is { } sn) Cinema.Swap(SwapLayer, sn, PageHost);
+        else if (changed) Arrive();
     }
 
     /// <summary>Rebuilds the current page (after a change that affects what it shows).</summary>
@@ -204,6 +207,7 @@ public partial class MainWindow : Window
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(105, bg.R, bg.G, bg.B), 0.62));
                     veil.GradientStops.Add(new GradientStop(Color.FromArgb(0, bg.R, bg.G, bg.B), 1));
                     BgLayer.Children.Add(new Border { Background = veil });
+                    if (t.Dark) BgLayer.Children.Add(Cinema.Flare(gb, -300, 330));
                     break;
                 }
                 case "image" when File.Exists(st.BackgroundPath):

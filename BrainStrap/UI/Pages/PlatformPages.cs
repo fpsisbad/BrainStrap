@@ -179,6 +179,55 @@ internal static class ExtensionsPage
         var s = AppState.S;
         var page = Ui.Page("BrainExtensions", "Install features that change how BrainStrap works. Extensions are built from BrainStrap's own safe actions, so none of them can run code, and each one shows exactly what it's allowed to do.", out var body);
 
+        // ── BrainOverlay: apps over the game ──
+        var ov = s.Overlay;
+        var apps = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+        foreach (var app in UI.OverlayHost.Apps(s))
+        {
+            var a = app;
+            var cell = new StackPanel { Width = 190, Margin = new Thickness(0, 0, 18, 18) };
+            var glyph = new Border { Width = 56, Height = 56, CornerRadius = new CornerRadius(28), BorderThickness = new Thickness(1), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12), Child = Icons.Make(a.Icon, 22, 1.6) };
+            glyph.SetResourceReference(Border.BorderBrushProperty, "Line2");
+            cell.Children.Add(glyph);
+            var nm = new TextBlock { Text = a.Name, FontSize = 28 };
+            nm.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
+            cell.Children.Add(nm);
+            cell.Children.Add(Ui.Text(a.Caption, 10, "Dim", mono: true));
+            var row = Ui.Row(Ui.Toggle(a.Enabled, on => { a.Enabled = on; AppState.Save(a.Name + " in the overlay " + (on ? "on" : "off")); }));
+            row.Margin = new Thickness(0, 10, 0, 0);
+            if (!OverlayApp.Builtins.Any(x => x.Id == a.Id))
+                row.Children.Add(Ui.Ghost("Remove", () => { ov.Apps.Remove(a); AppState.Save("Overlay app removed"); host.Refresh(); }));
+            cell.Children.Add(row);
+            apps.Children.Add(cell);
+        }
+        var addName = Ui.Field("My site", 180);
+        var addUrl = Ui.Field("https://", 320, true);
+        var preview = Ui.Small("", 8);
+        UI.OverlayHost? trial = null;
+        body.Children.Add(Ui.Card(
+            Ui.Head("", "YouTube, Spotify, Discord and Twitch, over your game.", $"Press {ov.Hotkey} while you play. The game dims, your apps come up, and the same keys put you straight back. Pin a panel to keep a video or chat on screen while you play. You sign in on each service's own page; BrainStrap never sees a password."),
+            Ui.ToggleRow("BrainOverlay", "BrainStrap's own windows floating over Roblox, like the Steam overlay. Nothing is added to the game.", ov.Enabled && Extensions.On(s, "brainoverlay"),
+                on => { ov.Enabled = on; if (on) s.Platform.BuiltinsOff.Remove("brainoverlay"); AppState.Save("BrainOverlay " + (on ? "on" : "off")); }),
+            apps,
+            Ui.Lbl("Hotkey", 6),
+            Ui.Chips(UI.OverlayHost.Hotkeys.Select(k => (k, k)).ToArray(), ov.Hotkey, v => { ov.Hotkey = v; AppState.Save("Overlay hotkey " + v); host.Refresh(); }),
+            Ui.Lbl("Add any site", 14),
+            Ui.Row(addName, new Border { Width = 10 }, addUrl, new Border { Width = 10 }, Ui.Ghost("Add", () =>
+            {
+                var url = addUrl.Text.Trim();
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var u) || u.Scheme != "https") { Ui.Msg(preview, "Sites have to start with https://", "Warn"); return; }
+                var label = addName.Text.Trim().Length > 0 ? addName.Text.Trim() : u.Host;
+                ov.Apps.Add(new OverlayApp { Id = "site-" + Guid.NewGuid().ToString("N")[..8], Name = label.Length > 24 ? label[..24] : label, Url = u.ToString(), Icon = "globe", Caption = u.Host.ToUpperInvariant() });
+                AppState.Save("Overlay app added");
+                host.Refresh();
+            })),
+            Ui.Buttons(Ui.Pill("Try the overlay now", () =>
+            {
+                trial ??= new UI.OverlayHost(s, null);
+                trial.Open();
+            })),
+            preview));
+
         var builtins = new StackPanel();
         foreach (var b in Extensions.Builtins)
         {

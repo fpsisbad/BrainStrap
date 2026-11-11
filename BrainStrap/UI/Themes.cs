@@ -18,6 +18,7 @@ internal static class Themes
 
     public static readonly ThemeDef[] BuiltIn =
     {
+        T("cinema",   "Cinema",   true,  "#07080A", "#101216", "#16181D", "#F4F1EA", "#A3A19B", "#6B6A66", "#1C1E23", "#262830", "#FFB547", "#35C2D0"),
         T("atelier",  "Atelier",  true,  "#0C0C0E", "#141416", "#1B1B1E", "#F3F0EA", "#A19E97", "#6C6A66", "#1F1F22", "#2A2A2E", "#F3F0EA", "#F3F0EA"),
         T("aurora",   "Aurora",   true,  "#08070E", "#12101C", "#1A1728", "#F4F2FF", "#A9A4C2", "#6F6A8A", "#221E33", "#2C2742", "#8B6CFF", "#38D6FF"),
         T("nebula",   "Nebula",   true,  "#0A070F", "#150F1D", "#1D152A", "#FBF2FF", "#B5A3C4", "#77688A", "#291D38", "#352648", "#9B5CFF", "#FF5CA8"),

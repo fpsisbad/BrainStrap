@@ -240,6 +240,7 @@ internal static class History
     /// <summary>The running session's numbers, or null when no session is active.</summary>
     public static LiveState? ReadLive()
     {
+        if (Demo.On) return new LiveState { Started = DateTime.UtcNow.AddMinutes(-37), Updated = DateTime.UtcNow, GameName = "Tower Tycoon", Fps = 141, Measuring = true, Ping = new PingStats(600, 31, 3, 0, 26, 58), Profile = "Competitive" };
         try
         {
             if (!File.Exists(LiveFile)) return null;

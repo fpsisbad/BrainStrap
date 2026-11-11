@@ -90,6 +90,7 @@
                     <TextBlock x:Name="Crumb" DockPanel.Dock="Left" VerticalAlignment="Center" Text="BRAINSTRAP" FontFamily="{DynamicResource MonoFont}" FontSize="10.5" Foreground="{DynamicResource Dim}" />
                 </DockPanel>
 
+                <Grid Grid.Row="1" x:Name="SwapLayer" IsHitTestVisible="False" ClipToBounds="False" Panel.ZIndex="1" />
                 <Grid Grid.Row="1" x:Name="PageHost">
                     <Grid.RenderTransform>
                         <TranslateTransform />
@@ -396,5 +397,7 @@
                 </Grid>
             </Grid>
         </Grid>
+        <!-- film grain and the vignette, over everything, never in the way of the mouse -->
+        <Grid x:Name="FxLayer" IsHitTestVisible="False" />
     </Grid>
 </Window>

@@ -17,7 +17,7 @@ namespace BrainStrap.Core;
 internal static class Session
 {
     public static bool Wanted(Settings s) =>
-        s.Perf.TrackSessions || s.Hud.Enabled || s.Crosshair.Enabled || (s.Discord.Enabled && s.Discord.ClientId.Trim().Length > 0) || s.Life.GameModePlus || s.Life.Companions.Count > 0;
+        s.Perf.TrackSessions || s.Hud.Enabled || s.Crosshair.Enabled || (s.Overlay.Enabled && Extensions.On(s, "brainoverlay")) || (s.Discord.Enabled && s.Discord.ClientId.Trim().Length > 0) || s.Life.GameModePlus || s.Life.Companions.Count > 0;
 
     /// <summary>For games started from a join link: waits for Roblox to appear, then runs the session.</summary>
     public static async Task WatchAsync(string? placeId)
@@ -120,6 +120,9 @@ internal static class Session
         using var monitor = new RobloxMonitor(roblox);
         Hud? hud = (ov.Hud ?? (s.Hud.Enabled && Extensions.On(s, "brainhud"))) ? new Hud(s) : null;
         hud?.Show();
+        UI.OverlayHost? overlay = null;
+        if (s.Overlay.Enabled && Extensions.On(s, "brainoverlay"))
+            try { overlay = new UI.OverlayHost(s, roblox); } catch (Exception ex) { Logger.Warn("overlay: " + ex.Message); }
         CrosshairOverlay? sight = s.Crosshair.Enabled ? new CrosshairOverlay(s) : null;
         sight?.Show();
 
@@ -156,6 +159,7 @@ internal static class Session
         }
 
         hud?.Close();
+        overlay?.Dispose();
         sight?.Close();
         History.ClearLive();
         if (discord != null) { await discord.ClearAsync(); discord.Dispose(); }

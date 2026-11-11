@@ -10,7 +10,7 @@
     <RootNamespace>BrainStrap</RootNamespace>
     <ApplicationIcon>Assets\brainstrap.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <Product>BrainStrap</Product>
     <Company>BrainStrap</Company>
     <Description>A customizable launcher for the Roblox Windows player.</Description>
@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <!-- WMI (PC Analyzer), Windows performance counters (monitors) and DPAPI (encrypted secrets) -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.*" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />

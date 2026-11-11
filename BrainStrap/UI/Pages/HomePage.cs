@@ -137,6 +137,35 @@ internal static class HomePage
 
     static UIElement Play(MainWindow host)
     {
+        // the 3D ring: your games, plus a few doors into the rest of BrainStrap so the ring is never empty
+        var cards = new List<Cinema.Card>();
+        foreach (var g in History.Playtime(DateTime.Now.AddDays(-60)).Where(g => g.placeId != null).Take(7))
+        {
+            var id = g.placeId!;
+            cards.Add(new Cinema.Card(g.game, $"{g.minutes:0} min played", id, () => JoinLinks.Join(id, null)));
+        }
+        foreach (var f in AppState.S.Servers.Favorites.Where(f => f.PrivateLinkProtected == null && RobloxApi.IsId(f.PlaceId)).Take(Math.Max(0, 7 - cards.Count)))
+        {
+            var id = f.PlaceId;
+            cards.Add(new Cinema.Card(f.Name, "favourite", id, () => JoinLinks.Join(id, null)));
+        }
+        var doors = new[]
+        {
+            new Cinema.Card("Discover games", "roblox.com", null, () => Ui.Open("https://www.roblox.com/discover")),
+            new Cinema.Card("BrainBoost", "tune this pc", null, () => host.Go("brainai")),
+            new Cinema.Card("BrainOverlay", "youtube · spotify · discord", null, () => host.Go("extensions")),
+            new Cinema.Card("BrainStore", "extensions & packs", null, () => host.Go("store")),
+            new Cinema.Card("BrainMods", "re-skin everything", null, () => host.Go("mods")),
+        };
+        foreach (var d in doors) { if (cards.Count >= 7) break; cards.Add(d); }
+        if (cards.Count >= 3)
+        {
+            var sp = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
+            sp.Children.Add(Ui.Lbl("Quick Play  ·  click a card"));
+            sp.Children.Add(Cinema.Stage(cards));
+            return sp;
+        }
+
         var lib = new WrapPanel();
         foreach (var g in History.Playtime(DateTime.Now.AddDays(-60)).Where(g => g.placeId != null).Take(6))
             lib.Children.Add(LifePage.GameTile(host, g.placeId!, g.game, $"{g.minutes:0} min played"));

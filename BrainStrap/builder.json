@@ -34,6 +34,7 @@
     "appearance": ["Change the launcher's look", "low"],
     "network": ["Send events to webhooks you added", "high"],
     "files": ["Write backups to your BrainStrap folder", "low"],
-    "launch": ["Start Roblox games", "medium"]
+    "launch": ["Start Roblox games", "medium"],
+    "overlay": ["Show YouTube, Spotify, Discord, Twitch and sites you add over the game", "low"]
   }
 }

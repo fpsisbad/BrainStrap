@@ -153,6 +153,40 @@ internal sealed class CrosshairSettings
 }
 
 /// <summary>Windows' own per-app settings for Roblox (Settings → Display → Graphics, and the Compatibility tab).</summary>
+/// <summary>An app in BrainOverlay.</summary>
+internal sealed class OverlayApp
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Url { get; set; } = "";
+    public string Icon { get; set; } = "globe";
+    public string Caption { get; set; } = "WEB";
+    public bool Enabled { get; set; } = true;
+    public bool Open { get; set; }
+    public bool Pinned { get; set; }
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double W { get; set; }
+    public double H { get; set; }
+
+    public OverlayApp Copy() => (OverlayApp)MemberwiseClone();
+
+    public static readonly OverlayApp[] Builtins =
+    {
+        new() { Id = "youtube", Name = "YouTube", Url = "https://www.youtube.com/", Icon = "play", Caption = "VIDEOS" },
+        new() { Id = "spotify", Name = "Spotify", Url = "https://open.spotify.com/", Icon = "music", Caption = "MUSIC" },
+        new() { Id = "discord", Name = "Discord", Url = "https://discord.com/app", Icon = "chat", Caption = "FRIENDS" },
+        new() { Id = "twitch", Name = "Twitch", Url = "https://www.twitch.tv/", Icon = "broadcast", Caption = "STREAMS" },
+    };
+}
+
+internal sealed class OverlaySettings
+{
+    public bool Enabled { get; set; } = true;
+    public string Hotkey { get; set; } = "Ctrl+Shift+B";
+    public List<OverlayApp> Apps { get; set; } = new();
+}
+
 internal sealed class TuningSettings
 {
     public bool HighPerformanceGpu { get; set; }
@@ -164,7 +198,7 @@ internal sealed class Settings
     public int SchemaVersion { get; set; } = 2;
 
     // look
-    public string Theme { get; set; } = "atelier";
+    public string Theme { get; set; } = "cinema";
     public string? Accent { get; set; }
 
     // launching
@@ -198,6 +232,7 @@ internal sealed class Settings
     public PlatformSettings Platform { get; set; } = new();
     public CrosshairSettings Crosshair { get; set; } = new();
     public TuningSettings Tuning { get; set; } = new();
+    public OverlaySettings Overlay { get; set; } = new();
 
     public string? OriginalHandlerCommand { get; set; }
     public string? OriginalLinkCommand { get; set; }
@@ -317,6 +352,16 @@ internal static class SettingsStore
         s.Life.Companions ??= new();
         s.Crosshair ??= new();
         s.Tuning ??= new();
+        s.Overlay ??= new();
+        s.Overlay.Apps ??= new();
+        s.Overlay.Apps.RemoveAll(a => a == null || string.IsNullOrWhiteSpace(a.Id) || !a.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+        if (!UI.OverlayHost.Hotkeys.Contains(s.Overlay.Hotkey)) s.Overlay.Hotkey = "Ctrl+Shift+B";
+        if (s.Look < 5)
+        {
+            // the 5th-generation look: Cinema is the new default, unless a theme was picked on purpose
+            if ((s.Theme is "atelier" or "aurora" or "silk") && s.Accent == null) s.Theme = "cinema";
+            s.Look = 5;
+        }
         if (s.Look < 3)
         {
             // the 3rd-generation look: the live silk backdrop is on unless a picture or video was chosen

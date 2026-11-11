@@ -76,6 +76,7 @@ internal static class Shots
     static IEnumerable<(string, Func<Window>)> Extra()
     {
         yield return ("x-splash", () => new LaunchSplash(BrainStrap.Core.AppState.S));
+        yield return ("x-overlay", () => { var w = new OverlayBackdrop(BrainStrap.Core.AppState.S, new OverlayHost(BrainStrap.Core.AppState.S, null)); w.Width = 1920; w.Height = 1080; return w; });
         yield return ("x-companion", () => new Pages.CompanionWindow());
     }
 
@@ -96,12 +97,12 @@ internal static class Shots
         using (var f = File.Create(path)) enc.Save(f);
         // a lighter copy for the website
         var name = Path.GetFileNameWithoutExtension(path);
-        if (name.Length > 3 && char.IsDigit(name[0]))
+        if (name == "x-overlay" || (name.Length > 3 && char.IsDigit(name[0])))
         {
             var web = Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(path)!, "web")).FullName;
             var jpg = new JpegBitmapEncoder { QualityLevel = 90 };
             jpg.Frames.Add(BitmapFrame.Create(rtb));
-            using var j = File.Create(Path.Combine(web, name[3..] + ".jpg"));
+            using var j = File.Create(Path.Combine(web, (name == "x-overlay" ? "overlay" : name[3..]) + ".jpg"));
             jpg.Save(j);
         }
     }

@@ -456,6 +456,7 @@ internal static class Extensions
 {
     public static readonly BuiltinExtension[] Builtins =
     {
+        new("brainoverlay", "BrainOverlay", "YouTube, Spotify, Discord and Twitch over your game, one hotkey away.", "extensions", new[] { "overlay" }, true),
         new("brainpilot", "BrainPilot", "AI assistant that controls launcher settings from plain English.", "brainai", new[] { "profiles", "hud", "settings" }, true),
         new("brainhud", "BrainHUD", "Customizable performance overlay: FPS, ping, CPU, GPU and temperatures.", "life", new[] { "hud" }),
         new("brainpulse", "BrainPulse", "Tracks FPS stability, crashes and performance history for every session.", "performance", new[] { "tracking" }),
